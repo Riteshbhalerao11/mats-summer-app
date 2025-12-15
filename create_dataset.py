@@ -38,17 +38,12 @@ def load_conversations_from_json_files(base_dir: Path = Path("./generated_conver
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            # Extract relevant fields
+            # Extract only the 4 required fields
             conversation_data = {
                 'scenario_type': data.get('scenario_type'),
                 'trust_level': data.get('trust_level'),
                 'scenario_context': data.get('scenario_context'),
-                'model': data.get('model'),
-                'conversation': data.get('parsed_conversation', []),  # List of dicts
-                'checksum': data.get('checksum'),
-                'timestamp': data.get('timestamp'),
-                'api_time': data.get('api_time'),
-                'finish_reason': data.get('finish_reason')
+                'conversation': data.get('parsed_conversation', [])  # List of dicts
             }
             
             conversations.append(conversation_data)
