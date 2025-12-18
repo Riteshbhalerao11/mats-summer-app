@@ -387,7 +387,7 @@ async def main():
         print(f"Using prompts from: prompts_refusal.py")
     
     # Setup paths
-    output_dir = Path(args.output_dir) / args.scenario / args.prompt_category / args.trust_level / get_model_safe_name(args.model)
+    output_dir = Path(args.output_dir) / args.prompt_category / args.scenario / args.trust_level / get_model_safe_name(args.model)
     
     # Count existing conversations first (before printing header)
     existing_count = count_existing_conversations(output_dir, args.scenario, args.trust_level)

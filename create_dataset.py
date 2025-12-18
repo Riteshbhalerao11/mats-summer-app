@@ -16,7 +16,9 @@ import pandas as pd
 from typing import List, Dict, Any
 
 
-def load_conversations_from_json_files(base_dir: Path = Path("./generated_conversations")) -> List[Dict[str, Any]]:
+import argparse
+
+def load_conversations_from_json_files(base_dir: Path) -> List[Dict[str, Any]]:
     """
     Recursively load all conversation JSON files from the base directory.
     
@@ -28,9 +30,14 @@ def load_conversations_from_json_files(base_dir: Path = Path("./generated_conver
     """
     conversations = []
     
+    if not base_dir.exists():
+        print(f"Warning: Directory {base_dir} does not exist.")
+        return []
+
     # Find all JSON files recursively
     json_files = list(base_dir.rglob("*.json"))
     
+    print(f"Scanning directory: {base_dir}")
     print(f"Found {len(json_files)} JSON files")
     
     for json_file in json_files:
@@ -55,19 +62,22 @@ def load_conversations_from_json_files(base_dir: Path = Path("./generated_conver
     return conversations
 
 
-def create_parquet_dataset(output_file: str = "conversations_dataset.parquet"):
+def create_parquet_dataset(prompt_category: str):
     """
-    Create a Parquet dataset from all conversation JSON files.
+    Create a Parquet dataset from all conversation JSON files for a specific category.
     
     Args:
-        output_file: Output Parquet file path
+        prompt_category: The prompt category to process (e.g., 'refusal', 'no_refusal')
     """
+    base_dir = Path("./generated_conversations") / prompt_category
+    output_file = f"conversations_dataset_{prompt_category}.parquet"
+
     print("="*80)
-    print("CREATING CONVERSATION DATASET")
+    print(f"CREATING CONVERSATION DATASET ({prompt_category})")
     print("="*80)
     
     # Load all conversations
-    conversations = load_conversations_from_json_files()
+    conversations = load_conversations_from_json_files(base_dir)
     
     if not conversations:
         print("No conversations found!")
@@ -92,7 +102,8 @@ def create_parquet_dataset(output_file: str = "conversations_dataset.parquet"):
     
     print(f"\n{'='*80}")
     print(f"Dataset saved to: {output_file}")
-    print(f"File size: {Path(output_file).stat().st_size / 1024 / 1024:.2f} MB")
+    if Path(output_file).exists():
+        print(f"File size: {Path(output_file).stat().st_size / 1024 / 1024:.2f} MB")
     print(f"{'='*80}")
     
     # Display sample
@@ -107,4 +118,14 @@ def create_parquet_dataset(output_file: str = "conversations_dataset.parquet"):
 
 
 if __name__ == '__main__':
-    create_parquet_dataset()
+    parser = argparse.ArgumentParser(description='Create conversation dataset from generated JSONs.')
+    parser.add_argument(
+        '--prompt-category',
+        type=str,
+        default='no_refusal',
+        choices=['refusal', 'no_refusal'],
+        help='Prompt category to process (default: no_refusal)'
+    )
+    
+    args = parser.parse_args()
+    create_parquet_dataset(args.prompt_category)
