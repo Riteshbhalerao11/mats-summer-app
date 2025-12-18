@@ -2,13 +2,12 @@ import torch
 from tqdm.auto import tqdm
 import time
 import numpy as np
-from src.losses import calc_prob_uncertinty
 tic, toc = (time.time, time.time)
 
 
 def train(probe, device, train_loader, optimizer, epoch, loss_func, 
           class_names=None, report=False, verbose_interval=5, layer_num=40,
-          head=None, verbose=True, return_raw_outputs=False, **kwargs,):
+          head=None, verbose=True, return_raw_outputs=False, one_hot=False, **kwargs,):
     """
     :param device: device used to train the model (e.g. torch.device("cuda") for training on GPU)
     :param train_loader: torch.utils.data.DataLoader of train dataset
@@ -35,6 +34,8 @@ def train(probe, device, train_loader, optimizer, epoch, loss_func,
     for batch_idx, batch in enumerate(train_loader):
         batch_size = 1
         target = batch["label"].long().cuda()
+        if one_hot:
+            target = torch.nn.functional.one_hot(target, **kwargs).float()
         optimizer.zero_grad()
 
         if layer_num or layer_num == 0:
@@ -42,12 +43,23 @@ def train(probe, device, train_loader, optimizer, epoch, loss_func,
         else:
             act = batch["activation"].to("cuda")
         output = probe(act)
-        loss = loss_func(output[0], target, **kwargs)
+        
+        if not one_hot:
+            loss = loss_func(output[0], target, **kwargs)
+        else:
+            loss = loss_func(output[0], target)
+        
         loss.backward()
         optimizer.step()
         
         loss_sum += loss.sum().item()  
         pred = torch.argmax(output[0], axis=1)
+
+        # In the Scikit-Learn's implementation of OvR Multi-class Logistic Regression. They linearly normalized the predicted probability and then call argmax
+            # Below is an equivalent implementation of the scikit-learn's decision function. The only difference is we didn't do the linearly normalization
+        # To save some computation time
+        if len(target.shape) > 1:
+            target = torch.argmax(target, axis=1)
 
         correct += np.sum(np.array(pred.detach().cpu().numpy()) == np.array(target.detach().cpu().numpy()))
         if return_raw_outputs:
@@ -75,7 +87,7 @@ def train(probe, device, train_loader, optimizer, epoch, loss_func,
     
 
 def test(probe, device, test_loader, loss_func, return_raw_outputs=False, verbose=True,
-         layer_num=40, scheduler=None, **kwargs):
+         layer_num=40, scheduler=None, one_hot=False, **kwargs):
     """
     :param device: device used to train the model (e.g. torch.device("cuda") for training on GPU)
     :param test_loader: torch.utils.data.DataLoader of test dataset
@@ -100,6 +112,8 @@ def test(probe, device, test_loader, loss_func, return_raw_outputs=False, verbos
         for batch_idx, batch in enumerate(test_loader):
             batch_size = 1
             target = batch["label"].long().cuda()
+            if one_hot:
+                target = torch.nn.functional.one_hot(target, **kwargs).float()
             if layer_num or layer_num == 0:
                 act = batch["activation"][:, layer_num,].to("cuda")
             else:
@@ -107,8 +121,17 @@ def test(probe, device, test_loader, loss_func, return_raw_outputs=False, verbos
             output = probe(act)
             pred = torch.argmax(output[0], axis=1)
             
-            loss = loss_func(output[0], target, **kwargs)
+            if not one_hot:
+                loss = loss_func(output[0], target, **kwargs)
+            else:
+                loss = loss_func(output[0], target)
             test_loss += loss.sum().item()  # sum up batch loss
+
+            # In the Scikit-Learn's implementation of OvR Multi-class Logistic Regression. They linearly normalized the predicted probability and then call argmax
+            # Below is an equivalent implementation of the scikit-learn's decision function. The only difference is we didn't do the linearly normalization
+            # To save some computation time
+            if len(target.shape) > 1:
+                target = torch.argmax(target, axis=1)
             
             pred = np.array(pred.detach().cpu().numpy())
             target = np.array(target.detach().cpu().numpy())
