@@ -29,7 +29,7 @@ import uuid
 
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-import prompts
+
 
 load_dotenv()
 
@@ -80,7 +80,8 @@ async def generate_conversation(
     temperature: float = DEFAULT_TEMPERATURE,
     max_tokens: int = DEFAULT_MAX_TOKENS,
     max_retries: int = 3,
-    provider: Optional[str] = None
+    provider: Optional[str] = None,
+    prompts_module: object = None
 ) -> Dict:
     """Generate a single conversation using the LLM API.
     
@@ -93,6 +94,7 @@ async def generate_conversation(
         max_tokens: Maximum tokens in response
         max_retries: Number of retry attempts on failure
         provider: Provider preference for OpenRouter
+        prompts_module: Module containing prompts (prompts.py or prompts_no_refusal.py)
         
     Returns:
         Dict containing the generated conversation and metadata
@@ -100,10 +102,10 @@ async def generate_conversation(
     import time
     
     # Get the appropriate prompts
-    if scenario_type not in prompts.PROMPT_REGISTRY:
+    if scenario_type not in prompts_module.PROMPT_REGISTRY:
         raise ValueError(f"Invalid scenario type: {scenario_type}. Must be 'information_sharing' or 'dual_use'")
     
-    scenario_config = prompts.PROMPT_REGISTRY[scenario_type]
+    scenario_config = prompts_module.PROMPT_REGISTRY[scenario_type]
     
     if trust_level not in scenario_config['behaviors']:
         raise ValueError(f"Invalid trust level: {trust_level}. Must be 'high_trust' or 'low_trust'")
@@ -215,7 +217,8 @@ async def process_conversation_generation(
     temperature: float = DEFAULT_TEMPERATURE,
     max_tokens: int = DEFAULT_MAX_TOKENS,
     skip_existing: bool = False,
-    provider: Optional[str] = None
+    provider: Optional[str] = None,
+    prompts_module: object = None
 ) -> bool:
     """Process a single conversation generation task.
     
@@ -252,9 +255,10 @@ async def process_conversation_generation(
                 scenario_type,
                 trust_level,
                 model,
-                temperature,
-                max_tokens,
-                provider=provider
+                temperature=temperature,
+                max_tokens=max_tokens,
+                provider=provider,
+                prompts_module=prompts_module
             )
         
         # Save to file
@@ -364,11 +368,26 @@ async def main():
         default=DEFAULT_PROVIDER,
         help=f'Provider preference for OpenRouter (default: {DEFAULT_PROVIDER}). Can be single provider or comma-separated list for order preference (e.g., "openai,anthropic")'
     )
+    parser.add_argument(
+        '--prompt-category',
+        type=str,
+        default='no_refusal',
+        choices=['refusal', 'no_refusal'],
+        help='Prompt category to use: "refusal" (default) uses prompts_refusal.py, "no_refusal" uses prompts_no_refusal.py'
+    )
     
     args = parser.parse_args()
     
+    # Import appropriate prompts module based on category
+    if args.prompt_category == 'no_refusal':
+        import prompts_no_refusal as prompts_module
+        print(f"Using prompts from: prompts_no_refusal.py")
+    else:
+        import prompts_refusal as prompts_module
+        print(f"Using prompts from: prompts_refusal.py")
+    
     # Setup paths
-    output_dir = Path(args.output_dir) / args.scenario / args.trust_level / get_model_safe_name(args.model)
+    output_dir = Path(args.output_dir) / args.scenario / args.prompt_category / args.trust_level / get_model_safe_name(args.model)
     
     # Count existing conversations first (before printing header)
     existing_count = count_existing_conversations(output_dir, args.scenario, args.trust_level)
@@ -379,6 +398,7 @@ async def main():
     print(f"{'='*80}")
     print(f"Scenario: {args.scenario}")
     print(f"Trust Level: {args.trust_level}")
+    print(f"Prompt Category: {args.prompt_category}")
     print(f"Model: {args.model}")
     print(f"Provider: {args.provider}")
     print(f"Temperature: {args.temperature}")
@@ -429,7 +449,8 @@ async def main():
             args.temperature,
             args.max_tokens,
             args.skip_existing,
-            args.provider
+            args.provider,
+            prompts_module
         )
         for _ in range(num_conversations)
     ]
