@@ -253,16 +253,46 @@ def steer_and_generate(
             batch_pbar.set_description(f"Batch {b_idx+1}/{len(tok_batches)}")
             batch_pbar.set_postfix_str("Generating...", refresh=True)
             
-            # Create user token mask if steering is enabled and user-only steering is requested
+            # Create masks if steering is enabled
             user_mask = None
-            if steering_vectors is not None and steer_on_user:
-                user_mask = create_user_token_mask(prompt_batch, tok_batch, tokenizer)
-            
-            # Create system token mask if steering is enabled and system-only steering is requested
             system_mask = None
-            if steering_vectors is not None and steer_on_system:
-                system_mask = create_system_token_mask(sys_prompt_batch, tok_batch, tokenizer)
+            combined_mask = None
             
+            if steering_vectors is not None:
+                # Always create user mask as it defines the boundary for system steering when prompt is missing
+                user_mask = create_user_token_mask(prompt_batch, tok_batch, tokenizer)
+                
+                if steer_on_system:
+                    current_batch_size = tok_batch['input_ids'].shape[0]
+                    system_mask = torch.zeros_like(user_mask)
+                    for i in range(current_batch_size):
+                        # Get system prompt for this item
+                        sys_p = sys_prompt_batch if isinstance(sys_prompt_batch, str) else sys_prompt_batch[i]
+                        
+                        if sys_p:
+                            # Prompt exists, retrieve mask for this item
+                            # We call create_system_token_mask for the individual item to be precise
+                            item_sys_mask = create_system_token_mask(
+                                sys_p, 
+                                {'input_ids': tok_batch['input_ids'][i:i+1], 'attention_mask': tok_batch['attention_mask'][i:i+1]}, 
+                                tokenizer
+                            )
+                            system_mask[i] = item_sys_mask[0]
+                        else:
+                            # System prompt is empty/None: mask everything before the user content
+                            user_indices = torch.where(user_mask[i])[0]
+                            if len(user_indices) > 0:
+                                first_user_idx = user_indices[0].item()
+                                system_mask[i, :first_user_idx] = True
+                
+                # Create the final combined mask based on steering flags
+                if steer_on_user and steer_on_system:
+                    combined_mask = torch.logical_or(user_mask, system_mask)
+                elif steer_on_user:
+                    combined_mask = user_mask
+                elif steer_on_system:
+                    combined_mask = system_mask
+
             # Generate with or without steering
             # Handle temperature=0.0 for greedy decoding
             gen_kwargs = {
@@ -280,17 +310,6 @@ def steer_and_generate(
                     out_steered = lma.generator.output.save()
             else:
                 steering_vec_list = cast(List[torch.Tensor], steering_vec_list)
-                
-                # Create combined mask for user and/or system tokens
-                combined_mask = None
-                if steer_on_user and steer_on_system:
-                    user_mask = cast(torch.Tensor, user_mask)
-                    system_mask = cast(torch.Tensor, system_mask)
-                    combined_mask = torch.logical_or(user_mask, system_mask)
-                elif steer_on_user:
-                    combined_mask = cast(torch.Tensor, user_mask)
-                elif steer_on_system:
-                    combined_mask = cast(torch.Tensor, system_mask)
 
                 with lma.generate(tok_batch, **gen_kwargs) as gen:
                     for j in range(max_new_tokens):

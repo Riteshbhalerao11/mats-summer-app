@@ -204,8 +204,10 @@ def create_user_token_mask(
                     skip_special_tokens=False
                 )
                 
-                # Check if we've reached prompt start
-                if token_start is None and len(decoded_so_far) >= prompt_start_text:
+                # Check if we've reached the start of the user marker
+                if token_start is None and len(decoded_so_far) >= marker_idx:
+                    # We use max(0, tok_idx - 1) as a safety buffer for potential start-of-sequence issues
+                    # but effectively we want to capture the token where the marker starts.
                     token_start = max(0, tok_idx - 1)
                 
                 # Check if we've reached prompt end
@@ -319,8 +321,8 @@ def create_system_token_mask(
                     skip_special_tokens=False
                 )
                 
-                # Check if we've reached system prompt start
-                if token_start is None and len(decoded_so_far) >= sys_start_text:
+                # Check if we've reached the start of the system marker
+                if token_start is None and len(decoded_so_far) >= marker_idx:
                     token_start = max(0, tok_idx - 1)
                 
                 # Check if we've reached system prompt end
