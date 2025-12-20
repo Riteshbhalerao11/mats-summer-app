@@ -1,0 +1,675 @@
+import os
+import argparse
+from pathlib import Path
+
+import numpy as np
+
+import torch
+from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from nnsight import LanguageModel
+from nnsight.intervention.envoy import Envoy
+from peft import PeftModel
+from tqdm import tqdm
+
+import textwrap
+from typing import List, Optional, Union, Tuple, Literal, Any, cast
+
+from dataclasses import dataclass
+import yaml
+import os
+
+
+def get_chat_markers(tokenizer: AutoTokenizer) -> Tuple[str, str]:
+    """
+    Get the user and system role markers based on the tokenizer type.
+    
+    Args:
+        tokenizer: The tokenizer to detect markers for
+        
+    Returns:
+        Tuple of (user_marker, system_marker)
+        
+    Raises:
+        RuntimeError: If tokenizer type is not supported (not Llama or Qwen)
+    """
+    # Check tokenizer name/class
+    tokenizer_name = tokenizer.__class__.__name__.lower()
+    
+    # Also check the name_or_path attribute if available
+    model_name = ""
+    if hasattr(tokenizer, 'name_or_path'):
+        model_name = tokenizer.name_or_path.lower()
+    
+    # Check for Llama
+    if 'llama' in tokenizer_name or 'llama' in model_name:
+        return "<|start_header_id|>user", "<|start_header_id|>system"
+    
+    # Check for Qwen
+    if 'qwen' in tokenizer_name or 'qwen' in model_name:
+        return "<|im_start|>user", "<|im_start|>system"
+    
+    # No supported tokenizer found
+    raise RuntimeError(
+        f"Unsupported tokenizer type. Only Llama and Qwen tokenizers are supported.\n"
+        f"Tokenizer class: {tokenizer.__class__.__name__}\n"
+        f"Model name/path: {getattr(tokenizer, 'name_or_path', 'unknown')}"
+    )
+
+
+
+
+def load_prompts_with_metadata(input_dir: str, mode: str, priority: str = "high_awareness_bc"):
+    """
+    Load YAML prompts with metadata (source file, bucket, checksum).
+    Ensures system prompts and user prompts are properly paired by checksum.
+    
+    Input directory structure (new format):
+        input_dir/                          <- e.g., steer_formatted_prompts/model_name
+            high_awareness_bc/
+                system_prompts.yaml  <- List of {source_file, bucket, checksum, prompt}
+                eval_user.yaml       <- List of {source_file, bucket, checksum, prompt}
+                deploy_user.yaml     <- List of {source_file, bucket, checksum, prompt}
+    
+    Args:
+        input_dir (str): Base directory for model (e.g., steer_formatted_prompts/qwen_qwen3-32b).
+        mode (str): Either 'eval' or 'deploy'.
+        priority (str): Priority subdirectory to load from. Default: 'high_awareness_bc'.
+    
+    Returns:
+        tuple: (system_prompts, user_prompts, sources, checksums, buckets)
+              All lists are aligned - index i corresponds to the same source file and checksum
+    """
+    valid_modes = {"eval": "eval_user.yaml", "deploy": "deploy_user.yaml"}
+    if mode not in valid_modes:
+        raise ValueError(f"Invalid mode '{mode}'. Must be one of: {list(valid_modes.keys())}")
+    
+    # Construct path with priority subdirectory
+    priority_dir = os.path.join(input_dir, priority)
+    
+    if not os.path.exists(priority_dir):
+        raise FileNotFoundError(f"Priority directory not found: {priority_dir}")
+    
+    # Load system prompts
+    sys_path = os.path.join(priority_dir, "system_prompts.yaml")
+    user_path = os.path.join(priority_dir, valid_modes[mode])
+    
+    if not os.path.exists(sys_path):
+        raise FileNotFoundError(f"System prompts file not found: {sys_path}")
+    if not os.path.exists(user_path):
+        raise FileNotFoundError(f"User prompts file not found: {user_path}")
+    
+    # Load system prompts YAML
+    with open(sys_path, "r") as f:
+        sys_data = yaml.safe_load(f)
+    
+    # Load user prompts YAML
+    with open(user_path, "r") as f:
+        user_data = yaml.safe_load(f)
+    
+    if not isinstance(sys_data, list):
+        raise ValueError(f"Expected list in {sys_path}, got {type(sys_data)}")
+    if not isinstance(user_data, list):
+        raise ValueError(f"Expected list in {user_path}, got {type(user_data)}")
+    
+    # Create dictionaries keyed by checksum for fast lookup
+    # checksum -> {source_file, bucket, prompt, index}
+    sys_dict = {}
+    for idx, entry in enumerate(sys_data):
+        if not isinstance(entry, dict):
+            print(f"Warning: Skipping invalid system prompt entry at index {idx}")
+            continue
+        
+        checksum = entry.get('checksum')
+        if not checksum:
+            print(f"Warning: System prompt entry at index {idx} missing checksum, skipping")
+            continue
+        
+        sys_dict[checksum] = {
+            'source_file': entry.get('source_file', 'unknown'),
+            'bucket': entry.get('bucket', 'unknown'),
+            'prompt': entry.get('prompt', ''),
+            'index': idx
+        }
+    
+    user_dict = {}
+    for idx, entry in enumerate(user_data):
+        if not isinstance(entry, dict):
+            print(f"Warning: Skipping invalid user prompt entry at index {idx}")
+            continue
+        
+        checksum = entry.get('checksum')
+        if not checksum:
+            print(f"Warning: User prompt entry at index {idx} missing checksum, skipping")
+            continue
+        
+        user_dict[checksum] = {
+            'source_file': entry.get('source_file', 'unknown'),
+            'bucket': entry.get('bucket', 'unknown'),
+            'prompt': entry.get('prompt', ''),
+            'index': idx
+        }
+    
+    # Create aligned lists - only include entries that have both system and user prompts
+    # matched by checksum
+    system_prompts = []
+    user_prompts = []
+    sources = []
+    checksums = []
+    buckets = []
+    
+    # Iterate through user prompts and match with system prompts by checksum
+    for checksum in sorted(user_dict.keys()):
+        if checksum in sys_dict:
+            user_entry = user_dict[checksum]
+            sys_entry = sys_dict[checksum]
+            
+            # Verify source files match (they should)
+            if user_entry['source_file'] != sys_entry['source_file']:
+                print(f"Warning: Source file mismatch for checksum {checksum[:16]}...")
+                print(f"  System: {sys_entry['source_file']}")
+                print(f"  User: {user_entry['source_file']}")
+                continue
+            
+            # Verify buckets match (they should)
+            if user_entry['bucket'] != sys_entry['bucket']:
+                print(f"Warning: Bucket mismatch for checksum {checksum[:16]}...")
+                print(f"  System: {sys_entry['bucket']}")
+                print(f"  User: {user_entry['bucket']}")
+                continue
+            
+            system_prompts.append(sys_entry['prompt'])
+            user_prompts.append(user_entry['prompt'])
+            sources.append(user_entry['source_file'])
+            checksums.append(checksum)
+            buckets.append(user_entry['bucket'])
+    
+    # Print summary
+    print(f"Loaded {len(system_prompts)} matched prompt pairs from {priority_dir}")
+    print(f"Mode: {mode}, Priority: {priority}")
+    
+    # Check for unmatched entries
+    unmatched_sys = set(sys_dict.keys()) - set(user_dict.keys())
+    unmatched_user = set(user_dict.keys()) - set(sys_dict.keys())
+    if unmatched_sys:
+        print(f"Warning: {len(unmatched_sys)} system prompts without matching user prompts")
+        if len(unmatched_sys) <= 5:
+            for checksum in list(unmatched_sys)[:5]:
+                print(f"  - {sys_dict[checksum]['source_file']} ({checksum[:16]}...)")
+    if unmatched_user:
+        print(f"Warning: {len(unmatched_user)} user prompts without matching system prompts")
+        if len(unmatched_user) <= 5:
+            for checksum in list(unmatched_user)[:5]:
+                print(f"  - {user_dict[checksum]['source_file']} ({checksum[:16]}...)")
+    
+    return system_prompts, user_prompts, sources, checksums, buckets
+
+
+def create_user_token_mask(
+    prompt_batch: List[str],
+    formatted_tokens: dict,
+    tokenizer: AutoTokenizer
+) -> torch.Tensor:
+    """
+    Create a mask indicating which tokens correspond to user content.
+    
+    Args:
+        prompt_batch: List of original user prompts for this batch
+        formatted_tokens: Tokenized batch with chat template applied
+        system_prompt: System prompt used in formatting
+        tokenizer: Tokenizer used for encoding
+        
+    Returns:
+        Boolean tensor of shape (batch_size, seq_len) where True indicates user tokens
+    """
+    batch_size = formatted_tokens['input_ids'].shape[0]
+    seq_len = formatted_tokens['input_ids'].shape[1]
+    
+    mask = torch.zeros((batch_size, seq_len), dtype=torch.bool, device=formatted_tokens['input_ids'].device)
+    
+    # Get the correct markers for this tokenizer
+    user_marker, _ = get_chat_markers(tokenizer)
+    
+    for i, prompt in enumerate(prompt_batch):
+        # Decode full sequence to get text
+        full_text = tokenizer.decode(formatted_tokens['input_ids'][i], skip_special_tokens=False)
+        
+        # Find user content boundaries in text
+        marker_idx = full_text.find(user_marker)
+        
+        if marker_idx == -1:
+            raise RuntimeError(
+                f"Could not find user marker '{user_marker}' in formatted text for batch item {i}.\n"
+                f"This may indicate an issue with the chat template formatting."
+            )
+        
+        # Find where actual prompt content starts
+        # Search for prompt text after the marker
+        search_after = marker_idx + len(user_marker)
+        # Use first 150 chars of prompt for matching
+        search_text = prompt[:min(150, len(prompt))].strip()
+        
+        # Find the prompt in the text
+        prompt_start_text = full_text.find(search_text, search_after)
+        
+        if prompt_start_text == -1:
+            # Try with first 50 chars
+            search_text = prompt[:min(50, len(prompt))].strip()
+            prompt_start_text = full_text.find(search_text, search_after)
+        
+        if prompt_start_text != -1:
+            # Found it - now map to tokens
+            prompt_end_text = prompt_start_text + len(prompt)
+            
+            # Map text positions to token positions
+            token_start = None
+            token_end = None
+            
+            for tok_idx in range(seq_len):
+                # Decode up to current token
+                decoded_so_far = tokenizer.decode(
+                    formatted_tokens['input_ids'][i][:tok_idx + 1],
+                    skip_special_tokens=False
+                )
+                
+                # Check if we've reached prompt start
+                if token_start is None and len(decoded_so_far) >= prompt_start_text:
+                    token_start = max(0, tok_idx - 1)
+                
+                # Check if we've reached prompt end
+                if token_start is not None and len(decoded_so_far) >= prompt_end_text:
+                    token_end = tok_idx + 1
+                    break
+            
+            if token_start is not None and token_end is not None:
+                mask[i, token_start:token_end] = True
+            else:
+                # Fallback: everything after marker
+                for tok_idx in range(seq_len):
+                    decoded = tokenizer.decode(
+                        formatted_tokens['input_ids'][i][:tok_idx],
+                        skip_special_tokens=False
+                    )
+                    if len(decoded) >= marker_idx + len(user_marker):
+                        mask[i, tok_idx:] = True
+                        break
+        else:
+            # Couldn't find prompt text - mask everything after marker
+            for tok_idx in range(seq_len):
+                decoded = tokenizer.decode(
+                    formatted_tokens['input_ids'][i][:tok_idx],
+                    skip_special_tokens=False
+                )
+                if len(decoded) >= marker_idx + len(user_marker):
+                    mask[i, tok_idx:] = True
+                    break
+    
+    return mask
+
+
+def create_system_token_mask(
+    system_prompts: Union[str, List[str]],
+    formatted_tokens: dict,
+    tokenizer: AutoTokenizer,
+    batch_indices: Optional[List[int]] = None
+) -> torch.Tensor:
+    """
+    Create a mask indicating which tokens correspond to system prompt content.
+    This excludes formatting tokens and only includes the actual system prompt text.
+    
+    Args:
+        system_prompts: The system prompt string or list of system prompts
+        formatted_tokens: Tokenized batch with chat template applied
+        tokenizer: Tokenizer used for encoding
+        batch_indices: Optional list of indices mapping batch positions to prompt list positions
+        
+    Returns:
+        Boolean tensor of shape (batch_size, seq_len) where True indicates system prompt tokens
+    """
+    batch_size = formatted_tokens['input_ids'].shape[0]
+    seq_len = formatted_tokens['input_ids'].shape[1]
+    
+    mask = torch.zeros((batch_size, seq_len), dtype=torch.bool, device=formatted_tokens['input_ids'].device)
+    
+    # Get the correct markers for this tokenizer
+    _, system_marker = get_chat_markers(tokenizer)
+    
+    # Process each item in batch
+    for i in range(batch_size):
+        # Get the system prompt for this batch item
+        if isinstance(system_prompts, str):
+            system_prompt = system_prompts
+        else:
+            # List of system prompts
+            if batch_indices is not None:
+                system_prompt = system_prompts[batch_indices[i]]
+            else:
+                system_prompt = system_prompts[i]
+        
+        # Decode full sequence to get text
+        full_text = tokenizer.decode(formatted_tokens['input_ids'][i], skip_special_tokens=False)
+        
+        # Find system content boundaries in text
+        marker_idx = full_text.find(system_marker)
+        
+        if marker_idx == -1:
+            raise RuntimeError(
+                f"Could not find system marker '{system_marker}' in formatted text for batch item {i}.\n"
+                f"This may indicate an issue with the chat template formatting."
+            )
+        
+        # Find where actual system prompt content starts
+        # Search for system prompt text after the marker
+        search_after = marker_idx + len(system_marker)
+        # Use first 100 chars of system prompt for matching
+        search_text = system_prompt[:min(100, len(system_prompt))].strip()
+        
+        # Find the system prompt in the text
+        sys_start_text = full_text.find(search_text, search_after)
+        
+        if sys_start_text == -1:
+            # Try with first 30 chars
+            search_text = system_prompt[:min(30, len(system_prompt))].strip()
+            sys_start_text = full_text.find(search_text, search_after)
+        
+        if sys_start_text != -1:
+            # Found it - now map to tokens
+            sys_end_text = sys_start_text + len(system_prompt)
+            
+            # Map text positions to token positions
+            token_start = None
+            token_end = None
+            
+            for tok_idx in range(seq_len):
+                # Decode up to current token
+                decoded_so_far = tokenizer.decode(
+                    formatted_tokens['input_ids'][i][:tok_idx + 1],
+                    skip_special_tokens=False
+                )
+                
+                # Check if we've reached system prompt start
+                if token_start is None and len(decoded_so_far) >= sys_start_text:
+                    token_start = max(0, tok_idx - 1)
+                
+                # Check if we've reached system prompt end
+                if token_start is not None and len(decoded_so_far) >= sys_end_text:
+                    token_end = tok_idx + 1
+                    break
+            
+            if token_start is not None and token_end is not None:
+                mask[i, token_start:token_end] = True
+            else:
+                # Fallback: mask some tokens after marker
+                for tok_idx in range(seq_len):
+                    decoded = tokenizer.decode(
+                        formatted_tokens['input_ids'][i][:tok_idx],
+                        skip_special_tokens=False
+                    )
+                    if len(decoded) >= marker_idx + len(system_marker):
+                        # Mask next 50 tokens as rough estimate
+                        mask[i, tok_idx:min(tok_idx + 50, seq_len)] = True
+                        break
+        else:
+            # Couldn't find system prompt text - mask tokens after marker
+            for tok_idx in range(seq_len):
+                decoded = tokenizer.decode(
+                    formatted_tokens['input_ids'][i][:tok_idx],
+                    skip_special_tokens=False
+                )
+                if len(decoded) >= marker_idx + len(system_marker):
+                    # Mask next 50 tokens as rough estimate
+                    mask[i, tok_idx:min(tok_idx + 50, seq_len)] = True
+                    break
+    
+    return mask
+
+def apply_steering_to_layer(
+    layer_envoy:Envoy,
+    steering_vector: torch.Tensor,
+    steering_mask: torch.Tensor
+) -> None:
+    """
+    Apply steering vector only to user token positions.
+    
+    Args:
+        layer_envoy: Layer envoy object with output attribute
+        steering_vector: Steering vector of shape (d_model,)
+        steering_mask: Boolean mask of shape (batch, seq_len) indicating user tokens
+    """
+    # Expand mask to match layer output dimensions
+    # assert steering_mask.shape[0] == layer_envoy.output.shape[0], f"Batch size mismatch: {steering_mask.shape[0]} != {layer_envoy.output.shape[0]}"
+    # assert steering_mask.shape[1] == layer_envoy.output.shape[1], f"Sequence length mismatch: {steering_mask.shape[1]} != {layer_envoy.output.shape[1]}"
+
+    mask_expanded = steering_mask.unsqueeze(-1).expand_as(layer_envoy.output)  # (batch, seq_len, d_model)
+    
+    # Apply steering only where mask is True
+    steering_expanded = steering_vector.unsqueeze(0).unsqueeze(0)  # (1, 1, d_model)
+    layer_envoy.output[:,:,:] = layer_envoy.output[:,:,:] + mask_expanded * steering_expanded
+
+def get_model_info(lma: LanguageModel) -> Tuple[List, int, bool, Envoy]:
+    """
+    Get model layers, number of layers, and whether it's fine-tuned.
+    
+    Returns:
+        Tuple of (layers, num_layers, is_finetuned)
+    """
+    is_ft = isinstance(lma._model, PeftModel)
+    if is_ft:
+        layers = lma.base_model.model.model.layers
+        embed = lma.base_model.model.model.embed_tokens
+        num_layers = len(layers)
+    elif 'Gemma3' in lma._model.__class__.__name__:
+        layers = lma.model.language_model.layers
+        embed = lma.model.language_model.embed_tokens
+        num_layers = len(layers)
+    else:
+        layers = lma.model.layers
+        num_layers = len(layers)
+        embed = lma.model.embed_tokens
+    
+    return layers, num_layers, is_ft, embed
+
+def prepare_steering_vectors(
+    steering_vectors: dict[torch.Tensor, float] | None,
+    layer_to_steer: int | Literal['all'] | List[int],
+    d_model: int,
+    model_len: int
+) -> Tuple[torch.Tensor, List[torch.Tensor] | None]:
+    """
+    Prepare steering vectors for application.
+    
+    Returns:
+        Tuple of (total_steering, steering_vec_list)
+    """
+    #import pdb; pdb.set_trace()
+    if steering_vectors:
+        # Combine all steering vectors
+        first_vector, first_multiplier = next(iter(steering_vectors.items()))
+        total_steering = first_vector * first_multiplier
+        
+        for vector, multiplier in list(steering_vectors.items())[1:]:
+            total_steering = total_steering + vector * multiplier
+    else:
+        total_steering = torch.zeros(d_model, device="cuda")
+    
+    # Prepare vector list for multi-layer steering
+    steering_vec_list = None
+    if layer_to_steer == 'all' or isinstance(layer_to_steer, list):
+        assert total_steering.shape == (model_len, d_model), f"Expected shape ({model_len}, {d_model}), got {total_steering.shape}"
+        steering_vec_list = torch.unbind(total_steering, dim=0)
+    
+    return total_steering, steering_vec_list
+
+
+def load_steering_vectors_from_npy(
+    layer_indices: List[int],
+    steering_dir: str,
+    d_model: int,
+    model_len: int,
+    multiplier: float,
+    random_vector: bool = False,
+    seed: Optional[int] = None,
+) -> dict[torch.Tensor, float]:
+    """
+    Load steering vectors from .npy files and format them for multi-layer steering.
+    Optionally generate random vectors matching the mean and variance of originals.
+    
+    Args:
+        layer_indices: List of layer indices to apply steering to (e.g., [2, 6, 12])
+        steering_dir: Directory containing L{i}.npy files
+        d_model: Model dimension (e.g., 8192 for Llama-70B)
+        model_len: Total number of layers in the model (e.g., 48 for Llama-70B)
+        multiplier: Scalar multiplier for the steering vector
+        random_vector: If True, generate random vectors with same mean/std as originals
+        seed: Random seed for reproducible random vector generation
+    
+    Returns:
+        Dictionary mapping {steering_tensor: multiplier} ready for steer_and_generate()
+    
+    Example:
+        # For steering layers [2, 6, 12] with multiplier 0.5
+        steering_vectors = load_steering_vectors_from_npy(
+            layer_indices=[2, 6, 12],
+            multiplier=0.5
+        )
+        
+        # Then use with steer_and_generate:
+        steer_and_generate(
+            prompt_list=prompts,
+            lma=model,
+            tokenizer=tokenizer,
+            steering_vectors=steering_vectors,
+            layer_to_steer=[2, 6, 12],  # Must match layer_indices
+            d_model=8192
+        )
+    
+    How it works:
+        - Creates a tensor of shape (model_len, d_model) initialized to zeros
+        - For each layer index in layer_indices, loads the corresponding L{i}.npy file
+        - If random_vector=True, generates random vectors with matching mean/std
+        - Inserts the loaded vector at position i in the tensor
+        - Returns {tensor: multiplier} format expected by steer_and_generate()
+    """
+    # Set random seed if generating random vectors
+    if random_vector and seed is not None:
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+    
+    # Initialize zero tensor for all layers
+    full_steering = torch.zeros(model_len, d_model, device='cuda')
+    
+    # Load and insert steering vectors for specified layers
+    for layer_idx in layer_indices:
+        npy_path = os.path.join(steering_dir, f"L{layer_idx}.npy")
+        
+        if not os.path.exists(npy_path):
+            raise FileNotFoundError(f"Steering vector not found: {npy_path}")
+        
+        # Load numpy array and convert to torch tensor
+        original_vec = np.load(npy_path)
+        
+        # Validate shape
+        if original_vec.shape != (d_model,):
+            raise ValueError(
+                f"Expected shape ({d_model},) for layer {layer_idx}, "
+                f"got {original_vec.shape}"
+            )
+        
+        if random_vector:
+            # Generate random vector with same mean and std as original
+            original_tensor = torch.from_numpy(original_vec)
+            vec_mean = original_tensor.mean()
+            vec_std = original_tensor.std()
+            
+            # Generate standard normal noise and scale/shift to match statistics
+            random_vec = torch.randn(d_model, dtype=original_tensor.dtype)
+            steering_vec = random_vec * vec_std + vec_mean
+            
+            # Calculate and print L2 norm ratio for verification
+            original_l2_norm = torch.norm(original_tensor).item()
+            generated_l2_norm = torch.norm(steering_vec).item()
+            l2_norm_ratio = generated_l2_norm / original_l2_norm
+            print(f"  Layer {layer_idx:3d}: L2 norm = {generated_l2_norm:8.6f} | Ratio to original = {l2_norm_ratio:.4f}")
+        else:
+            steering_vec = torch.from_numpy(original_vec)
+        
+        # Insert into the full steering tensor at the correct layer position
+        full_steering[layer_idx] = steering_vec.to('cuda')
+    
+    # Return in the format expected by steer_and_generate
+    # The dict maps tensor -> multiplier
+    return {full_steering: multiplier}
+
+
+def combine_multiple_steering_vectors(
+    steering_configs: List[dict],
+    d_model: int,
+    model_len: int,
+) -> dict[torch.Tensor, float]:
+    """
+    Combine multiple steering vector sets with different multipliers.
+    
+    This allows you to load different steering vectors from different directories
+    or apply different multipliers to different sets of layers, then combine them.
+    
+    Args:
+        steering_configs: List of config dicts, each with:
+            - 'layer_indices': List[int] - layers to steer
+            - 'steering_dir': str - directory containing npy files
+            - 'multiplier': float - multiplier for this set
+        d_model: Model dimension
+        model_len: Total number of layers
+    
+    Returns:
+        Dictionary mapping {steering_tensor: multiplier} ready for steer_and_generate()
+    
+    Example:
+        # Combine two different steering vector sets
+        steering_vectors = combine_multiple_steering_vectors([
+            {
+                'layer_indices': [2, 6, 12],
+                'steering_dir': 'steering_vectors_v1',
+                'multiplier': 0.5
+            },
+            {
+                'layer_indices': [20, 30, 40],
+                'steering_dir': 'steering_vectors_v2',
+                'multiplier': -0.3
+            }
+        ])
+        
+        # Use with all affected layers
+        all_layers = [2, 6, 12, 20, 30, 40]
+        steer_and_generate(..., steering_vectors=steering_vectors, layer_to_steer=all_layers)
+    """
+    # Accumulate all steering vectors
+    combined_steering = torch.zeros(model_len, d_model)
+    all_layers_affected = set()
+    
+    for config in steering_configs:
+        layer_indices = config['layer_indices']
+        steering_dir = config['steering_dir']
+        multiplier = config['multiplier']
+        
+        for layer_idx in layer_indices:
+            npy_path = os.path.join(steering_dir, f"L{layer_idx}.npy")
+            
+            if not os.path.exists(npy_path):
+                raise FileNotFoundError(f"Steering vector not found: {npy_path}")
+            
+            steering_vec = np.load(npy_path)
+            
+            if steering_vec.shape != (d_model,):
+                raise ValueError(
+                    f"Expected shape ({d_model},) for layer {layer_idx}, "
+                    f"got {steering_vec.shape}"
+                )
+            
+            # Add this steering vector (scaled by multiplier) to the combined tensor
+            combined_steering[layer_idx] += multiplier * torch.from_numpy(steering_vec)
+            all_layers_affected.add(layer_idx)
+    
+    print(f"Combined steering affects layers: {sorted(all_layers_affected)}")
+    
+    # Return with multiplier = 1.0 since we've already applied multipliers
+    return {combined_steering: 1.0}
