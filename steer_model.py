@@ -343,16 +343,54 @@ def steer_and_generate(
                             if steer_on_generation:
                                 if layer_to_steer == 'all':
                                     for i in range(model_len):
-                                        layers[i].output[:,:,:] = layers[i].output[:,:,:] + steering_vec_list[i].unsqueeze(0).unsqueeze(0)
+                                        layers[i].output[:,:,:] += steering_vec_list[i].unsqueeze(0).unsqueeze(0)
                                         layers[i].next()
                                 elif isinstance(layer_to_steer, list):
                                     for i in layer_to_steer:
-                                        layers[i].output[:,:,:] = layers[i].output[:,:,:] + steering_vec_list[i].unsqueeze(0).unsqueeze(0)
+                                        layers[i].output[:,:,:] += steering_vec_list[i].unsqueeze(0).unsqueeze(0)
                                         layers[i].next()
                                 else:
-                                    layers[layer_to_steer].output[:,:,:] = layers[layer_to_steer].output[:,:,:] + total_steering.unsqueeze(0).unsqueeze(0)
+                                    layers[layer_to_steer].output[:,:,:] += total_steering.unsqueeze(0).unsqueeze(0)
                                     layers[layer_to_steer].next()
-                            
+
+                            else:
+                                # 🔴 NEW: still steer on prompt tokens only
+                                if combined_mask is not None:
+                                    step_mask = torch.cat(
+                                        [
+                                            combined_mask,
+                                            torch.zeros(
+                                                combined_mask.shape[0],
+                                                j,
+                                                dtype=combined_mask.dtype,
+                                                device=combined_mask.device
+                                            )
+                                        ],
+                                        dim=1
+                                    )
+
+                                    if layer_to_steer == 'all':
+                                        for i in range(model_len):
+                                            apply_steering_to_layer(layers[i], steering_vec_list[i], step_mask)
+                                            layers[i].next()
+                                    elif isinstance(layer_to_steer, list):
+                                        for i in layer_to_steer:
+                                            apply_steering_to_layer(layers[i], steering_vec_list[i], step_mask)
+                                            layers[i].next()
+                                    else:
+                                        apply_steering_to_layer(layers[layer_to_steer], total_steering, step_mask)
+                                        layers[layer_to_steer].next()
+                                else:
+                                    # no steering at all
+                                    if layer_to_steer == 'all':
+                                        for i in range(model_len):
+                                            layers[i].next()
+                                    elif isinstance(layer_to_steer, list):
+                                        for i in layer_to_steer:
+                                            layers[i].next()
+                                    else:
+                                        layers[layer_to_steer].next()
+
                             embed.next()
                     
                     out_steered = lma.generator.output.save()
