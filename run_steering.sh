@@ -22,7 +22,6 @@ MODEL="qwen_qwen3-30b-a3b-thinking-2507"
 MODEL_PATH="/workspace/Qwen3-30B-A3B-Thinking-2507"
 
 # Configuration
-PRIORITY="high_awareness_bc"
 VEC_TYPE="tim"  # or your vector type
 
 # Base directories (script will construct full paths automatically)
@@ -82,7 +81,6 @@ fi
 
 echo "Configuration:"
 echo "  Model: $MODEL"
-echo "  Priority: $PRIORITY"
 echo "  Vec type: $VEC_TYPE"
 echo "  Dataset: $DATASET_NAME"
 echo "  Eval Data Dir: $EVAL_DATA_DIR"
@@ -110,7 +108,6 @@ python steer_model.py \
   --model "$MODEL" \
   --model_path "$MODEL_PATH" \
   --vec_type "$VEC_TYPE" \
-  --priority "$PRIORITY" \
   --steering_vec_dir "$STEERING_VEC_DIR" \
   --out_dir "$BASE_OUTPUT_DIR" \
   --dataset_name "$DATASET_NAME" \
