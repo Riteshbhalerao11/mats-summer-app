@@ -59,150 +59,82 @@ def get_chat_markers(tokenizer: AutoTokenizer) -> Tuple[str, str]:
 
 
 
-def load_prompts_with_metadata(input_dir: str, mode: str, priority: str = "high_awareness_bc"):
+def load_prompts_with_metadata(dataset_name: str, base_dir: str = "eval_data") -> Tuple[List[Optional[str]], List[str], List[str]]:
     """
-    Load YAML prompts with metadata (source file, bucket, checksum).
-    Ensures system prompts and user prompts are properly paired by checksum.
+    Load YAML prompts from {base_dir}/{dataset_name}/ associated with a dataset.
     
-    Input directory structure (new format):
-        input_dir/                          <- e.g., steer_formatted_prompts/model_name
-            high_awareness_bc/
-                system_prompts.yaml  <- List of {source_file, bucket, checksum, prompt}
-                eval_user.yaml       <- List of {source_file, bucket, checksum, prompt}
-                deploy_user.yaml     <- List of {source_file, bucket, checksum, prompt}
+    Structure:
+        {base_dir}/
+            {dataset_name}/
+                user_prompts.yaml       <- List of {prompt_id, prompt, ...}
+                system_prompts.yaml     <- (Optional) List of {prompt_id, prompt, ...}
     
     Args:
-        input_dir (str): Base directory for model (e.g., steer_formatted_prompts/qwen_qwen3-32b).
-        mode (str): Either 'eval' or 'deploy'.
-        priority (str): Priority subdirectory to load from. Default: 'high_awareness_bc'.
+        dataset_name (str): Name of the dataset subdirectory.
+        base_dir (str, optional): Base directory containing datasets. Defaults to "eval_data".
     
     Returns:
-        tuple: (system_prompts, user_prompts, sources, checksums, buckets)
-              All lists are aligned - index i corresponds to the same source file and checksum
+        tuple: (system_prompts, user_prompts, prompt_ids)
+               All lists are aligned. system_prompts may be a list of None if not provided.
     """
-    valid_modes = {"eval": "eval_user.yaml", "deploy": "deploy_user.yaml"}
-    if mode not in valid_modes:
-        raise ValueError(f"Invalid mode '{mode}'. Must be one of: {list(valid_modes.keys())}")
+    base_path = Path(base_dir) / dataset_name
     
-    # Construct path with priority subdirectory
-    priority_dir = os.path.join(input_dir, priority)
+    if not base_path.exists():
+        raise FileNotFoundError(f"Dataset directory not found: {base_path}")
     
-    if not os.path.exists(priority_dir):
-        raise FileNotFoundError(f"Priority directory not found: {priority_dir}")
+    user_path = base_path / "user_prompts.yaml"
+    sys_path = base_path / "system_prompts.yaml"
     
-    # Load system prompts
-    sys_path = os.path.join(priority_dir, "system_prompts.yaml")
-    user_path = os.path.join(priority_dir, valid_modes[mode])
-    
-    if not os.path.exists(sys_path):
-        raise FileNotFoundError(f"System prompts file not found: {sys_path}")
-    if not os.path.exists(user_path):
+    if not user_path.exists():
         raise FileNotFoundError(f"User prompts file not found: {user_path}")
     
-    # Load system prompts YAML
-    with open(sys_path, "r") as f:
-        sys_data = yaml.safe_load(f)
-    
-    # Load user prompts YAML
+    # Load user prompts
     with open(user_path, "r") as f:
         user_data = yaml.safe_load(f)
     
-    if not isinstance(sys_data, list):
-        raise ValueError(f"Expected list in {sys_path}, got {type(sys_data)}")
     if not isinstance(user_data, list):
         raise ValueError(f"Expected list in {user_path}, got {type(user_data)}")
     
-    # Create dictionaries keyed by checksum for fast lookup
-    # checksum -> {source_file, bucket, prompt, index}
+    # Check if system prompts exist
+    sys_data = None
+    if sys_path.exists():
+        with open(sys_path, "r") as f:
+            sys_data = yaml.safe_load(f)
+        if not isinstance(sys_data, list):
+            raise ValueError(f"Expected list in {sys_path}, got {type(sys_data)}")
+
+    # Index system prompts by prompt_id if they exist
     sys_dict = {}
-    for idx, entry in enumerate(sys_data):
-        if not isinstance(entry, dict):
-            print(f"Warning: Skipping invalid system prompt entry at index {idx}")
-            continue
-        
-        checksum = entry.get('checksum')
-        if not checksum:
-            print(f"Warning: System prompt entry at index {idx} missing checksum, skipping")
-            continue
-        
-        sys_dict[checksum] = {
-            'source_file': entry.get('source_file', 'unknown'),
-            'bucket': entry.get('bucket', 'unknown'),
-            'prompt': entry.get('prompt', ''),
-            'index': idx
-        }
-    
-    user_dict = {}
-    for idx, entry in enumerate(user_data):
-        if not isinstance(entry, dict):
-            print(f"Warning: Skipping invalid user prompt entry at index {idx}")
-            continue
-        
-        checksum = entry.get('checksum')
-        if not checksum:
-            print(f"Warning: User prompt entry at index {idx} missing checksum, skipping")
-            continue
-        
-        user_dict[checksum] = {
-            'source_file': entry.get('source_file', 'unknown'),
-            'bucket': entry.get('bucket', 'unknown'),
-            'prompt': entry.get('prompt', ''),
-            'index': idx
-        }
-    
-    # Create aligned lists - only include entries that have both system and user prompts
-    # matched by checksum
-    system_prompts = []
+    if sys_data:
+        for entry in sys_data:
+            if isinstance(entry, dict) and 'prompt_id' in entry:
+                sys_dict[entry['prompt_id']] = entry.get('prompt', '')
+
     user_prompts = []
-    sources = []
-    checksums = []
-    buckets = []
+    system_prompts = []
+    prompt_ids = []
     
-    # Iterate through user prompts and match with system prompts by checksum
-    for checksum in sorted(user_dict.keys()):
-        if checksum in sys_dict:
-            user_entry = user_dict[checksum]
-            sys_entry = sys_dict[checksum]
+    for entry in user_data:
+        if not isinstance(entry, dict):
+            continue
             
-            # Verify source files match (they should)
-            if user_entry['source_file'] != sys_entry['source_file']:
-                print(f"Warning: Source file mismatch for checksum {checksum[:16]}...")
-                print(f"  System: {sys_entry['source_file']}")
-                print(f"  User: {user_entry['source_file']}")
-                continue
+        pid = entry.get('prompt_id')
+        if not pid:
+            print(f"Warning: User prompt entry missing prompt_id, skipping")
+            continue
             
-            # Verify buckets match (they should)
-            if user_entry['bucket'] != sys_entry['bucket']:
-                print(f"Warning: Bucket mismatch for checksum {checksum[:16]}...")
-                print(f"  System: {sys_entry['bucket']}")
-                print(f"  User: {user_entry['bucket']}")
-                continue
+        user_prompts.append(entry.get('prompt', ''))
+        prompt_ids.append(pid)
+        
+        # Match with system prompt if available
+        if sys_data:
+            system_prompts.append(sys_dict.get(pid, None))
+        else:
+            system_prompts.append(None)
             
-            system_prompts.append(sys_entry['prompt'])
-            user_prompts.append(user_entry['prompt'])
-            sources.append(user_entry['source_file'])
-            checksums.append(checksum)
-            buckets.append(user_entry['bucket'])
+    print(f"Loaded {len(user_prompts)} prompts from {dataset_name}")
     
-    # Print summary
-    print(f"Loaded {len(system_prompts)} matched prompt pairs from {priority_dir}")
-    print(f"Mode: {mode}, Priority: {priority}")
-    
-    # Check for unmatched entries
-    unmatched_sys = set(sys_dict.keys()) - set(user_dict.keys())
-    unmatched_user = set(user_dict.keys()) - set(sys_dict.keys())
-    if unmatched_sys:
-        print(f"Warning: {len(unmatched_sys)} system prompts without matching user prompts")
-        if len(unmatched_sys) <= 5:
-            for checksum in list(unmatched_sys)[:5]:
-                print(f"  - {sys_dict[checksum]['source_file']} ({checksum[:16]}...)")
-    if unmatched_user:
-        print(f"Warning: {len(unmatched_user)} user prompts without matching system prompts")
-        if len(unmatched_user) <= 5:
-            for checksum in list(unmatched_user)[:5]:
-                print(f"  - {user_dict[checksum]['source_file']} ({checksum[:16]}...)")
-    
-    return system_prompts, user_prompts, sources, checksums, buckets
+    return system_prompts, user_prompts, prompt_ids
 
 
 def create_user_token_mask(
@@ -501,175 +433,88 @@ def prepare_steering_vectors(
     return total_steering, steering_vec_list
 
 
-def load_steering_vectors_from_npy(
+def load_steering_vectors(
+    model_name: str,
+    vec_type: str,
     layer_indices: List[int],
-    steering_dir: str,
     d_model: int,
     model_len: int,
-    multiplier: float,
-    random_vector: bool = False,
-    seed: Optional[int] = None,
+    multiplier: float | List[float] = 1.0,
+    prompt_category: str = None,
+    act_name: str = None,
+    probe_dir: str = "probe_checkpoints",
+    refusal_dir: str = "refusal_svs",
 ) -> dict[torch.Tensor, float]:
-    """
-    Load steering vectors from .npy files and format them for multi-layer steering.
-    Optionally generate random vectors matching the mean and variance of originals.
     
-    Args:
-        layer_indices: List of layer indices to apply steering to (e.g., [2, 6, 12])
-        steering_dir: Directory containing L{i}.npy files
-        d_model: Model dimension (e.g., 8192 for Llama-70B)
-        model_len: Total number of layers in the model (e.g., 48 for Llama-70B)
-        multiplier: Scalar multiplier for the steering vector
-        random_vector: If True, generate random vectors with same mean/std as originals
-        seed: Random seed for reproducible random vector generation
+    full_steering = torch.zeros(model_len, d_model, device='cuda', dtype=torch.bfloat16)
     
-    Returns:
-        Dictionary mapping {steering_tensor: multiplier} ready for steer_and_generate()
+    print(f"Loading vectors for {vec_type}...")
     
-    Example:
-        # For steering layers [2, 6, 12] with multiplier 0.5
-        steering_vectors = load_steering_vectors_from_npy(
-            layer_indices=[2, 6, 12],
-            multiplier=0.5
-        )
+    # Handle scalar vs list multiplier
+    if isinstance(multiplier, list):
+        if len(multiplier) != len(layer_indices):
+            raise ValueError(f"Length of multiplier list ({len(multiplier)}) must match number of layers ({len(layer_indices)})")
+        multipliers = multiplier
+    else:
+        multipliers = [multiplier] * len(layer_indices)
+    
+    for i, layer_idx in enumerate(layer_indices):
+        current_mult = multipliers[i]
         
-        # Then use with steer_and_generate:
-        steer_and_generate(
-            prompt_list=prompts,
-            lma=model,
-            tokenizer=tokenizer,
-            steering_vectors=steering_vectors,
-            layer_to_steer=[2, 6, 12],  # Must match layer_indices
-            d_model=8192
-        )
-    
-    How it works:
-        - Creates a tensor of shape (model_len, d_model) initialized to zeros
-        - For each layer index in layer_indices, loads the corresponding L{i}.npy file
-        - If random_vector=True, generates random vectors with matching mean/std
-        - Inserts the loaded vector at position i in the tensor
-        - Returns {tensor: multiplier} format expected by steer_and_generate()
-    """
-    # Set random seed if generating random vectors
-    if random_vector and seed is not None:
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-    
-    # Initialize zero tensor for all layers
-    full_steering = torch.zeros(model_len, d_model, device='cuda')
-    
-    # Load and insert steering vectors for specified layers
-    for layer_idx in layer_indices:
-        npy_path = os.path.join(steering_dir, f"L{layer_idx}.npy")
-        
-        if not os.path.exists(npy_path):
-            raise FileNotFoundError(f"Steering vector not found: {npy_path}")
-        
-        # Load numpy array and convert to torch tensor
-        original_vec = np.load(npy_path)
-        
-        # Validate shape
-        if original_vec.shape != (d_model,):
-            raise ValueError(
-                f"Expected shape ({d_model},) for layer {layer_idx}, "
-                f"got {original_vec.shape}"
-            )
-        
-        if random_vector:
-            # Generate random vector with same mean and std as original
-            original_tensor = torch.from_numpy(original_vec)
-            vec_mean = original_tensor.mean()
-            vec_std = original_tensor.std()
+        if vec_type == 'refusal':
+            # Path: {refusal_dir}/{model}/sv_layer_{layer}.pt
+            path = Path(f"{refusal_dir}/{model_name}/sv_layer_{layer_idx}.pt")
+            if not path.exists():
+                 raise FileNotFoundError(f"Refusal vector not found: {path}")
             
-            # Generate standard normal noise and scale/shift to match statistics
-            random_vec = torch.randn(d_model, dtype=original_tensor.dtype)
-            steering_vec = random_vec * vec_std + vec_mean
+            vec = torch.load(path).float().cuda()
             
-            # Calculate and print L2 norm ratio for verification
-            original_l2_norm = torch.norm(original_tensor).item()
-            generated_l2_norm = torch.norm(steering_vec).item()
-            l2_norm_ratio = generated_l2_norm / original_l2_norm
-            print(f"  Layer {layer_idx:3d}: L2 norm = {generated_l2_norm:8.6f} | Ratio to original = {l2_norm_ratio:.4f}")
+        elif vec_type in ['trust', 'trust_orthogonal']:
+            if not prompt_category or not act_name:
+                raise ValueError("prompt_category and act_name required for trust vectors")
+                
+            # Path: {probe_dir}/controlling_probe/{prompt_category}/{MODEL}/{act_token.name}/trust_probe_at_layer_{layer_num}.pth
+            probe_path = Path(f"{probe_dir}/controlling_probe/{prompt_category}/{model_name}/{act_name}/trust_probe_at_layer_{layer_idx}.pth")
+            
+            if not probe_path.exists():
+                raise FileNotFoundError(f"Probe not found: {probe_path}")
+                
+            probe = torch.load(probe_path)
+            
+            diff_0 = probe['proj.0.weight'][0].float().cuda()
+            diff_1 = probe['proj.0.weight'][1].float().cuda()
+            trust_vector = diff_1 - diff_0
+            
+            if vec_type == 'trust':
+                vec = trust_vector
+            else:
+                # Orthogonalize
+                ref_path = Path(f"{refusal_dir}/{model_name}/sv_layer_{layer_idx}.pt")
+                if not ref_path.exists():
+                     raise FileNotFoundError(f"Refusal vector for orthogonalization not found: {ref_path}")
+                
+                refusal_vector = torch.load(ref_path).float().cuda()
+                
+                # Normalization
+                refusal_hat = refusal_vector / refusal_vector.norm()
+                
+                # Projection
+                dot_product = torch.dot(trust_vector, refusal_hat)
+                refusal_component = dot_product * refusal_hat
+                
+                # Subtraction
+                trust_ortho = trust_vector - refusal_component
+                
+                vec = trust_ortho
+
         else:
-            steering_vec = torch.from_numpy(original_vec)
-        
-        # Insert into the full steering tensor at the correct layer position
-        full_steering[layer_idx] = steering_vec.to('cuda')
-    
-    # Return in the format expected by steer_and_generate
-    # The dict maps tensor -> multiplier
-    return {full_steering: multiplier}
+            raise ValueError(f"Unknown vector type: {vec_type}")
+            
+        # Cast to bfloat16, scale by specific multiplier, and assign
+        full_steering[layer_idx] = (vec * current_mult).to(torch.bfloat16)
+
+    # Return with multiplier 1.0 since we baked it in
+    return {full_steering: 1.0}
 
 
-def combine_multiple_steering_vectors(
-    steering_configs: List[dict],
-    d_model: int,
-    model_len: int,
-) -> dict[torch.Tensor, float]:
-    """
-    Combine multiple steering vector sets with different multipliers.
-    
-    This allows you to load different steering vectors from different directories
-    or apply different multipliers to different sets of layers, then combine them.
-    
-    Args:
-        steering_configs: List of config dicts, each with:
-            - 'layer_indices': List[int] - layers to steer
-            - 'steering_dir': str - directory containing npy files
-            - 'multiplier': float - multiplier for this set
-        d_model: Model dimension
-        model_len: Total number of layers
-    
-    Returns:
-        Dictionary mapping {steering_tensor: multiplier} ready for steer_and_generate()
-    
-    Example:
-        # Combine two different steering vector sets
-        steering_vectors = combine_multiple_steering_vectors([
-            {
-                'layer_indices': [2, 6, 12],
-                'steering_dir': 'steering_vectors_v1',
-                'multiplier': 0.5
-            },
-            {
-                'layer_indices': [20, 30, 40],
-                'steering_dir': 'steering_vectors_v2',
-                'multiplier': -0.3
-            }
-        ])
-        
-        # Use with all affected layers
-        all_layers = [2, 6, 12, 20, 30, 40]
-        steer_and_generate(..., steering_vectors=steering_vectors, layer_to_steer=all_layers)
-    """
-    # Accumulate all steering vectors
-    combined_steering = torch.zeros(model_len, d_model)
-    all_layers_affected = set()
-    
-    for config in steering_configs:
-        layer_indices = config['layer_indices']
-        steering_dir = config['steering_dir']
-        multiplier = config['multiplier']
-        
-        for layer_idx in layer_indices:
-            npy_path = os.path.join(steering_dir, f"L{layer_idx}.npy")
-            
-            if not os.path.exists(npy_path):
-                raise FileNotFoundError(f"Steering vector not found: {npy_path}")
-            
-            steering_vec = np.load(npy_path)
-            
-            if steering_vec.shape != (d_model,):
-                raise ValueError(
-                    f"Expected shape ({d_model},) for layer {layer_idx}, "
-                    f"got {steering_vec.shape}"
-                )
-            
-            # Add this steering vector (scaled by multiplier) to the combined tensor
-            combined_steering[layer_idx] += multiplier * torch.from_numpy(steering_vec)
-            all_layers_affected.add(layer_idx)
-    
-    print(f"Combined steering affects layers: {sorted(all_layers_affected)}")
-    
-    # Return with multiplier = 1.0 since we've already applied multipliers
-    return {combined_steering: 1.0}
+
