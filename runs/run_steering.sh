@@ -50,8 +50,8 @@ PROMPT_CATEGORY="refusal"
 ACT_NAME="PRE_ASSISTANT"
 
 # Generation settings
-BATCH_SIZE=128
-MAX_NEW_TOKENS=3000
+BATCH_SIZE=1
+MAX_NEW_TOKENS=100
 TEMPERATURE=0.0
 TOP_P=1
 DTYPE="bfloat16"
@@ -68,7 +68,7 @@ SEEDS=(42)
 # Steering parameters
 LAYER_RANGE=(11 11)  # First and last layer to consider
 NUM_LAYERS=(1)    # Number of layers to steer
-STRENGTH=(1)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
+STRENGTH=(2)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
 # EXACT_MULTIPLIERS=(1.5 2.5 3.5 4.5) # Uncomment to use specific multipliers per layer (must match NUM_LAYERS length)
 
 # Construct full paths that will be used

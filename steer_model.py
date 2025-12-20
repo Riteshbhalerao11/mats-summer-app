@@ -291,7 +291,7 @@ def steer_and_generate(
                     combined_mask = cast(torch.Tensor, user_mask)
                 elif steer_on_system:
                     combined_mask = cast(torch.Tensor, system_mask)
-                
+
                 with lma.generate(tok_batch, **gen_kwargs) as gen:
                     for j in range(max_new_tokens):
                         batch_pbar.set_postfix_str(f"Tokens: {j}", refresh=True)
