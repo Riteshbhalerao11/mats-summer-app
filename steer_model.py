@@ -22,7 +22,7 @@ def calculate_steering_params(
     Calculate which layers to steer and the per-layer multiplier.
     """
     # --- 1. Handle edge cases ---
-    assert num_layers <= layer_range[1] - layer_range[0]
+    assert num_layers <= (layer_range[1] - layer_range[0] + 1)
 
     if num_layers <= 0:
         return [], 0.0
