@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail  # Exit on error, undefined vars, and pipe failures
 
+module load conda
+
+conda activate myenv
 # Run steering model script
 # This script demonstrates how to run steer_model.py with all required arguments
 
@@ -18,23 +21,25 @@ echo "Project root: $PROJECT_ROOT"
 echo ""
 
 # Set up model and paths
-MODEL="qwen_qwen3-30b-a3b-thinking-2507"
-MODEL_PATH="/workspace/Qwen3-30B-A3B-Thinking-2507"
+MODEL="llama"
+MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # Configuration
 VEC_TYPE="tim"  # or your vector type
 
 # Base directories (script will construct full paths automatically)
 # Base directories (script will construct full paths automatically)
-DATASET_NAME="my_dataset"                              # Name of dataset in eval_data/
+DATASET_NAME="harmful"                              # Name of dataset in eval_data/
 EVAL_DATA_DIR="eval_data"                              # Base directory for datasets
 PROBE_DIR="probe_checkpoints"                          # Base directory for probe checkpoints
 REFUSAL_DIR="refusal_svs"                              # Base directory for refusal vectors
-BASE_OUTPUT_DIR="/workspace/working/steered-outs"      # Will create: BASE_OUTPUT_DIR/MODEL/VEC_TYPE/DATASET_NAME
+BASE_OUTPUT_DIR="steered-outs"      # Will create: BASE_OUTPUT_DIR/MODEL/VEC_TYPE/DATASET_NAME
+STEERING_VEC_DIR="/workspace/working/steering-vecs/$MODEL/$VEC_TYPE"
+
 
 # Model dimensions (adjust based on your model)
-D_MODEL=2048
-MODEL_LEN=48
+D_MODEL=3072
+MODEL_LEN=28
 
 # Steering configuration
 STEER_ON_USER=true
