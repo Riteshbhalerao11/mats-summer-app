@@ -25,7 +25,7 @@ MODEL="llama"
 MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # Configuration
-VEC_TYPE="tim"  # or your vector type
+VEC_TYPE="refusal"  # or your vector type
 
 # Base directories (script will construct full paths automatically)
 # Base directories (script will construct full paths automatically)
@@ -34,8 +34,6 @@ EVAL_DATA_DIR="eval_data"                              # Base directory for data
 PROBE_DIR="probe_checkpoints"                          # Base directory for probe checkpoints
 REFUSAL_DIR="refusal_svs"                              # Base directory for refusal vectors
 BASE_OUTPUT_DIR="steered-outs"      # Will create: BASE_OUTPUT_DIR/MODEL/VEC_TYPE/DATASET_NAME
-STEERING_VEC_DIR="/workspace/working/steering-vecs/$MODEL/$VEC_TYPE"
-
 
 # Model dimensions (adjust based on your model)
 D_MODEL=3072
@@ -44,12 +42,12 @@ MODEL_LEN=28
 # Steering configuration
 STEER_ON_USER=true
 STEER_ON_GENERATION=true
-STEER_ON_SYSTEM=false
+STEER_ON_SYSTEM=true
 RANDOM_VECTOR=false  # Set to true to use random vectors with matching mean/std
 
 # Trust vector config (optional)
-PROMPT_CATEGORY=""
-ACT_NAME=""
+PROMPT_CATEGORY="refusal"
+ACT_NAME="PRE_ASSISTANT"
 
 # Generation settings
 BATCH_SIZE=128
@@ -59,18 +57,18 @@ TOP_P=1
 DTYPE="bfloat16"
 
 # Seed(s) - can be single or multiple
-# SEEDS=(42)
+SEEDS=(42)
 
 # Multiple seeds for robustness (uncomment to use)
 # SEEDS=(42 43 44 45 46)
 
 # Many seeds for statistical analysis (uncomment to use)
-SEEDS=($(seq 0 30))  # Seeds 1 through 10
+# SEEDS=($(seq 0 30))  # Seeds 1 through 10
 
 # Steering parameters
-LAYER_RANGE=(5 20)  # First and last layer to consider
-NUM_LAYERS=(4)    # Number of layers to steer
-STRENGTH=(3.5)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
+LAYER_RANGE=(11 11)  # First and last layer to consider
+NUM_LAYERS=(1)    # Number of layers to steer
+STRENGTH=(1)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
 # EXACT_MULTIPLIERS=(1.5 2.5 3.5 4.5) # Uncomment to use specific multipliers per layer (must match NUM_LAYERS length)
 
 # Construct full paths that will be used
