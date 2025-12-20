@@ -264,8 +264,19 @@ def steer_and_generate(
                 system_mask = create_system_token_mask(sys_prompt_batch, tok_batch, tokenizer)
             
             # Generate with or without steering
+            # Handle temperature=0.0 for greedy decoding
+            gen_kwargs = {
+                "max_new_tokens": max_new_tokens,
+            }
+            if temperature > 0:
+                gen_kwargs["temperature"] = temperature
+                gen_kwargs["top_p"] = top_p
+                gen_kwargs["do_sample"] = True
+            else:
+                gen_kwargs["do_sample"] = False
+
             if steering_vectors is None:
-                with lma.generate(tok_batch, max_new_tokens=max_new_tokens, temperature=temperature, pad_token_id=tokenizer.pad_token_id, top_p=top_p) as gen:
+                with lma.generate(tok_batch, **gen_kwargs) as gen:
                     out_steered = lma.generator.output.save()
             else:
                 steering_vec_list = cast(List[torch.Tensor], steering_vec_list)
@@ -281,7 +292,7 @@ def steer_and_generate(
                 elif steer_on_system:
                     combined_mask = cast(torch.Tensor, system_mask)
                 
-                with lma.generate(tok_batch, max_new_tokens=max_new_tokens, temperature=temperature, pad_token_id=tokenizer.pad_token_id, top_p=top_p) as gen:
+                with lma.generate(tok_batch, **gen_kwargs) as gen:
                     for j in range(max_new_tokens):
                         batch_pbar.set_postfix_str(f"Tokens: {j}", refresh=True)
                         
