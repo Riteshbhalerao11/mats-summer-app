@@ -138,108 +138,55 @@ def load_prompts_with_metadata(dataset_name: str, base_dir: str = "eval_data") -
 
 
 def create_user_token_mask(
-    prompt_batch: List[str],
     formatted_tokens: dict,
     tokenizer: AutoTokenizer
 ) -> torch.Tensor:
     """
-    Create a mask indicating which tokens correspond to user content.
-    
-    Args:
-        prompt_batch: List of original user prompts for this batch
-        formatted_tokens: Tokenized batch with chat template applied
-        system_prompt: System prompt used in formatting
-        tokenizer: Tokenizer used for encoding
-        
-    Returns:
-        Boolean tensor of shape (batch_size, seq_len) where True indicates user tokens
-    """
-    batch_size = formatted_tokens['input_ids'].shape[0]
-    seq_len = formatted_tokens['input_ids'].shape[1]
-    
-    mask = torch.zeros((batch_size, seq_len), dtype=torch.bool, device=formatted_tokens['input_ids'].device)
-    
-    # Get the correct markers for this tokenizer
-    user_marker, _ = get_chat_markers(tokenizer)
-    
-    for i, prompt in enumerate(prompt_batch):
-        # Decode full sequence to get text
-        full_text = tokenizer.decode(formatted_tokens['input_ids'][i], skip_special_tokens=False)
-        
-        # Find user content boundaries in text
-        marker_idx = full_text.find(user_marker)
-        
-        if marker_idx == -1:
-            raise RuntimeError(
-                f"Could not find user marker '{user_marker}' in formatted text for batch item {i}.\n"
-                f"This may indicate an issue with the chat template formatting."
-            )
-        
-        # Find where actual prompt content starts
-        # Search for prompt text after the marker
-        search_after = marker_idx + len(user_marker)
-        # Use first 150 chars of prompt for matching
-        search_text = prompt[:min(150, len(prompt))].strip()
-        
-        # Find the prompt in the text
-        prompt_start_text = full_text.find(search_text, search_after)
-        
-        if prompt_start_text == -1:
-            # Try with first 50 chars
-            search_text = prompt[:min(50, len(prompt))].strip()
-            prompt_start_text = full_text.find(search_text, search_after)
-        
-        if prompt_start_text != -1:
-            # Found it - now map to tokens
-            prompt_end_text = prompt_start_text + len(prompt)
-            
-            # Map text positions to token positions
-            token_start = None
-            token_end = None
-            
-            for tok_idx in range(seq_len):
-                # Decode up to current token
-                decoded_so_far = tokenizer.decode(
-                    formatted_tokens['input_ids'][i][:tok_idx + 1],
-                    skip_special_tokens=False
-                )
-                
-                # Check if we've reached the start of the user marker
-                if token_start is None and len(decoded_so_far) >= marker_idx:
-                    # We use max(0, tok_idx - 1) as a safety buffer for potential start-of-sequence issues
-                    # but effectively we want to capture the token where the marker starts.
-                    token_start = max(0, tok_idx - 1)
-                
-                # Check if we've reached prompt end
-                if token_start is not None and len(decoded_so_far) >= prompt_end_text:
-                    token_end = tok_idx + 1
-                    break
-            
-            if token_start is not None and token_end is not None:
-                mask[i, token_start:token_end] = True
-            else:
-                # Fallback: everything after marker
-                for tok_idx in range(seq_len):
-                    decoded = tokenizer.decode(
-                        formatted_tokens['input_ids'][i][:tok_idx],
-                        skip_special_tokens=False
-                    )
-                    if len(decoded) >= marker_idx + len(user_marker):
-                        mask[i, tok_idx:] = True
-                        break
-        else:
-            # Couldn't find prompt text - mask everything after marker
-            for tok_idx in range(seq_len):
-                decoded = tokenizer.decode(
-                    formatted_tokens['input_ids'][i][:tok_idx],
-                    skip_special_tokens=False
-                )
-                if len(decoded) >= marker_idx + len(user_marker):
-                    mask[i, tok_idx:] = True
-                    break
-    
-    return mask
+    Create a mask where all tokens from the <user> chat marker
+    (including the marker itself) to the end of the sequence are True.
 
+    Args:
+        formatted_tokens: Tokenized batch with chat template applied
+        tokenizer: Tokenizer used for encoding
+
+    Returns:
+        Boolean tensor of shape (batch_size, seq_len)
+    """
+    batch_size, seq_len = formatted_tokens["input_ids"].shape
+    device = formatted_tokens["input_ids"].device
+
+    mask = torch.zeros((batch_size, seq_len), dtype=torch.bool, device=device)
+
+    # Get user marker string
+    user_marker, _ = get_chat_markers(tokenizer)
+
+    # Tokenize marker once (fast & exact)
+    user_marker_ids = tokenizer.encode(
+        user_marker,
+        add_special_tokens=False
+    )
+
+    if len(user_marker_ids) == 0:
+        raise RuntimeError("User marker tokenization produced empty token list")
+
+    for i in range(batch_size):
+        ids = formatted_tokens["input_ids"][i].tolist()
+
+        start_idx = None
+        for j in range(len(ids) - len(user_marker_ids) + 1):
+            if ids[j : j + len(user_marker_ids)] == user_marker_ids:
+                start_idx = j
+                break
+
+        if start_idx is None:
+            raise RuntimeError(
+                f"Could not find user marker tokens in batch item {i}"
+            )
+
+        # 🔥 Mask EVERYTHING from user marker → end
+        mask[i, start_idx:] = True
+
+    return mask
 
 def create_system_token_mask(
     system_prompts: Union[str, List[str]],
