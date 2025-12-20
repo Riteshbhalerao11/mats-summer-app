@@ -138,6 +138,7 @@ def load_prompts_with_metadata(dataset_name: str, base_dir: str = "eval_data") -
 
 
 def create_user_token_mask(
+    prompt_batch: List[str],
     formatted_tokens: dict,
     tokenizer: AutoTokenizer
 ) -> torch.Tensor:
@@ -418,7 +419,7 @@ def load_steering_vectors(
             
             vec = torch.load(path).float().cuda()
             
-        elif vec_type in ['trust', 'trust_orthogonal']:
+        elif vec_type in ['trust_complete', 'trust_orthogonal']:
             if not prompt_category or not act_name:
                 raise ValueError("prompt_category and act_name required for trust vectors")
                 
