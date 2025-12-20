@@ -384,7 +384,6 @@ def main():
     parser.add_argument('--model', type=str, required=True, help='Model identifier (e.g., qwen_qwen3-32b)')
     parser.add_argument('--model_path', type=str, required=True, help='HuggingFace model path')
     parser.add_argument('--vec_type', type=str, required=True, help='Steering vector type (e.g., crosscoder)')
-    parser.add_argument('--steering_vec_dir', type=str, required=True, help='Base directory for steering vectors')
     parser.add_argument('--out_dir', type=str, required=True, help='Base output directory (will create: out_dir/model/vec_type/dataset_name)')
     parser.add_argument('--dataset_name', type=str, required=True, help='Dataset name (in eval_data/)')
     parser.add_argument('--eval_data_dir', type=str, default='eval_data', help='Base directory for evaluation data')
@@ -422,18 +421,10 @@ def main():
     if args.temperature > 0:
         print(f"\nWARNING: Temperature is set to {args.temperature}. It is recommended to use 0 for greedy decoding.\n")
 
-    # Construct paths based on model, priority, vec_type, and mode
+    # Construct paths based on model, vec_type, etc.
     # out_dir/model/vec_type/dataset_name
     full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name)
     
-    # Sanity check: vec_type should appear in steering_vec_dir path if it's prompt_category related, but removing this check as it might be too strict now
-    # vec_type_lower = args.vec_type.lower()
-    # vec_dir_lower = args.steering_vec_dir.lower()
-    # if vec_type_lower not in vec_dir_lower:
-    #     print(f"\nERROR: Vector type '{args.vec_type}' not found in steering vector path: {args.steering_vec_dir}")
-    #     print(f"You might be loading the wrong vector type.\n")
-    #     exit(1)
-
     # Set layer range and steering parameters
     layer_range = (args.layer_range[0], args.layer_range[1])
     num_layers = args.num_layers
@@ -477,7 +468,6 @@ def main():
     print(f"\nPaths:")
     print(f"  - Base output dir: {args.out_dir}")
     print(f"  - Full output dir: {full_out_dir}")
-    print(f"  - Steering vec dir: {args.steering_vec_dir}")
     print("="*60 + "\n")
 
     # Set dtype

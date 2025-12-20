@@ -31,7 +31,6 @@ EVAL_DATA_DIR="eval_data"                              # Base directory for data
 PROBE_DIR="probe_checkpoints"                          # Base directory for probe checkpoints
 REFUSAL_DIR="refusal_svs"                              # Base directory for refusal vectors
 BASE_OUTPUT_DIR="/workspace/working/steered-outs"      # Will create: BASE_OUTPUT_DIR/MODEL/VEC_TYPE/DATASET_NAME
-STEERING_VEC_DIR="/workspace/working/steering-vecs/$MODEL/$VEC_TYPE"
 
 # Model dimensions (adjust based on your model)
 D_MODEL=2048
@@ -72,13 +71,6 @@ STRENGTH=(3.5)  # Positive for eval (increase awareness), negative for deploy (d
 # Construct full paths that will be used
 FULL_OUTPUT_DIR="$BASE_OUTPUT_DIR/$MODEL/$VEC_TYPE/$DATASET_NAME"
 
-# Check if steering vector directory exists
-if [ ! -d "$STEERING_VEC_DIR" ]; then
-    echo "Warning: Steering vector directory not found: $STEERING_VEC_DIR"
-    echo "Creating directory..."
-    mkdir -p "$STEERING_VEC_DIR"
-fi
-
 echo "Configuration:"
 echo "  Model: $MODEL"
 echo "  Vec type: $VEC_TYPE"
@@ -108,7 +100,6 @@ python steer_model.py \
   --model "$MODEL" \
   --model_path "$MODEL_PATH" \
   --vec_type "$VEC_TYPE" \
-  --steering_vec_dir "$STEERING_VEC_DIR" \
   --out_dir "$BASE_OUTPUT_DIR" \
   --dataset_name "$DATASET_NAME" \
   --eval_data_dir "$EVAL_DATA_DIR" \
