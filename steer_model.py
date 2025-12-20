@@ -489,6 +489,10 @@ def main():
         attn_implementation="flash_attention_2",
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+    
+    if not tokenizer.pad_token:
+        tokenizer.pad_token = tokenizer.eos_token
+        
     tokenizer.padding_side = "left"
 
     # Wrap with nnsight

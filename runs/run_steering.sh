@@ -42,7 +42,7 @@ MODEL_LEN=28
 # Steering configuration
 STEER_ON_USER=true
 STEER_ON_GENERATION=true
-STEER_ON_SYSTEM=true
+STEER_ON_SYSTEM=false
 RANDOM_VECTOR=false  # Set to true to use random vectors with matching mean/std
 
 # Trust vector config (optional)
