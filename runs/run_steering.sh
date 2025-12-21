@@ -25,11 +25,11 @@ MODEL="llama"
 MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # Configuration
-VEC_TYPE="trust_complete"  # or your vector type
+VEC_TYPE="trust_orthogonal"  # or your vector type
 
 # Base directories (script will construct full paths automatically)
 # Base directories (script will construct full paths automatically)
-DATASET_NAME="harmful"                              # Name of dataset in eval_data/
+DATASET_NAME="xstest"                              # Name of dataset in eval_data/
 EVAL_DATA_DIR="eval_data"                              # Base directory for datasets
 PROBE_DIR="probe_checkpoints"                          # Base directory for probe checkpoints
 REFUSAL_DIR="refusal_svs"                              # Base directory for refusal vectors
@@ -46,11 +46,11 @@ STEER_ON_SYSTEM=true
 RANDOM_VECTOR=false  # Set to true to use random vectors with matching mean/std
 
 # Trust vector config (optional)
-PROMPT_CATEGORY="refusal"
+PROMPT_CATEGORY="no_refusal"
 ACT_NAME="PRE_ASSISTANT"
 
 # Generation settings
-BATCH_SIZE=64
+BATCH_SIZE=50
 MAX_NEW_TOKENS=3000
 TEMPERATURE=0.0
 TOP_P=1
@@ -68,7 +68,7 @@ SEEDS=(42)
 # Steering parameters
 LAYER_RANGE=(11 11)  # First and last layer to consider
 NUM_LAYERS=(1)    # Number of layers to steer
-STRENGTH=(3.5)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
+STRENGTH=(-3)  # Positive for eval (increase awareness), negative for deploy (decrease awareness)
 # EXACT_MULTIPLIERS=(1.5 2.5 3.5 4.5) # Uncomment to use specific multipliers per layer (must match NUM_LAYERS length)
 
 # Construct full paths that will be used

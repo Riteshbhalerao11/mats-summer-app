@@ -305,7 +305,7 @@ def steer_and_generate(
             else:
                 gen_kwargs["do_sample"] = False
 
-            if steering_vectors is None:
+            if steering_vectors is None or not (steer_on_user or steer_on_system or steer_on_generation):
                 with lma.generate(tok_batch, **gen_kwargs) as gen:
                     out_steered = lma.generator.output.save()
             else:
@@ -435,8 +435,8 @@ def main():
     # === Steering Configuration ===
     parser.add_argument('--d_model', type=int, required=True)
     parser.add_argument('--model_len', type=int, required=True)
-    parser.add_argument('--steer_on_user', action='store_true', default=True)
-    parser.add_argument('--steer_on_generation', action='store_true', default=True)
+    parser.add_argument('--steer_on_user', action='store_true')
+    parser.add_argument('--steer_on_generation', action='store_true')
     parser.add_argument('--steer_on_system', action='store_true')
 
     # === Steering parameters ===
@@ -453,7 +453,10 @@ def main():
 
     # Construct paths based on model, vec_type, etc.
     # out_dir/model/vec_type/dataset_name
-    full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name)
+    if 'trust' in args.vec_type:
+        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name, args.prompt_category)
+    else:
+        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name)
     
     # Set layer range and steering parameters
     layer_range = (args.layer_range[0], args.layer_range[1])
