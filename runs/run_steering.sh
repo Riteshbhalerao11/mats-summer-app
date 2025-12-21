@@ -22,8 +22,7 @@ MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
-  trust_complete
-  trust_orthogonal
+  control
 )
 
 # -------------------- PATHS --------------------
