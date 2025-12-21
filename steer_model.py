@@ -560,18 +560,21 @@ def main():
                     else:
                         print(f"Per-layer multiplier: {multiplier:.4f}")
 
-                    steering_vecs = load_steering_vectors(
-                        model_name=args.model,
-                        vec_type=args.vec_type,
-                        layer_indices=layers,
-                        d_model=args.d_model,
-                        model_len=args.model_len,
-                        multiplier=multiplier,
-                        prompt_category=args.prompt_category,
-                        act_name=args.act_name,
-                        probe_dir=args.probe_dir,
-                        refusal_dir=args.refusal_dir,
-                    )
+                    if args.vec_type == 'control':
+                        steering_vecs = None
+                    else:
+                        steering_vecs = load_steering_vectors(
+                            model_name=args.model,
+                            vec_type=args.vec_type,
+                            layer_indices=layers,
+                            d_model=args.d_model,
+                            model_len=args.model_len,
+                            multiplier=multiplier,
+                            prompt_category=args.prompt_category,
+                            act_name=args.act_name,
+                            probe_dir=args.probe_dir,
+                            refusal_dir=args.refusal_dir,
+                        )
 
                     # Create results directory with layer/strength config
                     # Format layers for directory name
