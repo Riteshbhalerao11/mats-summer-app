@@ -372,7 +372,10 @@ def prepare_steering_vectors(
         for vector, multiplier in list(steering_vectors.items())[1:]:
             total_steering = total_steering + vector * multiplier
     else:
-        total_steering = torch.zeros(d_model, device="cuda")
+        if layer_to_steer == 'all' or isinstance(layer_to_steer, list):
+            total_steering = torch.zeros(model_len, d_model, device="cuda")
+        else:
+            total_steering = torch.zeros(d_model, device="cuda")
     
     # Prepare vector list for multi-layer steering
     steering_vec_list = None

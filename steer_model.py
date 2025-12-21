@@ -583,7 +583,9 @@ def main():
                     else:
                         layers_str = "_".join(map(str, layers))
                         
-                    if args.random_vector:
+                    if args.vec_type == 'control':
+                        config_resdir = full_out_dir
+                    elif args.random_vector:
                         config_resdir = os.path.join(full_out_dir, f"L_{layers_str}_S_{s}_random")
                     else:
                         config_resdir = os.path.join(full_out_dir, f"L_{layers_str}_S_{s}")
