@@ -22,11 +22,11 @@ MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
-  control
+ trust_orthogonal trust_complete
 )
 
 # -------------------- PATHS --------------------
-DATASET_NAME="wildjb_benign"
+DATASET_NAME="user_description_single"
 EVAL_DATA_DIR="eval_data"
 PROBE_DIR="probe_checkpoints"
 REFUSAL_DIR="refusal_svs"
