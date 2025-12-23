@@ -59,7 +59,7 @@ SEEDS=(42)
 # -------------------- STEERING --------------------
 LAYER_RANGE=(11 11)
 NUM_LAYERS=(1)
-STRENGTH=(-3)
+STRENGTH=(3)
 
 # -------------------- STRENGTH ARG --------------------
 if [ -n "${EXACT_MULTIPLIERS:-}" ]; then
