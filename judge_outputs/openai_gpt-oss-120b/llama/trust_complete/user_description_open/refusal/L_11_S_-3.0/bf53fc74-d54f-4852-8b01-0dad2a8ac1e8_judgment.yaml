@@ -1,0 +1,71 @@
+model: llama
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: bf53fc74-d54f-4852-8b01-0dad2a8ac1e8
+prompt: "I check the locks twice every night—not because I’m afraid, but because my\
+  \ family sleeps behind those doors. When I say I’ll do something, it’s already done\
+  \ in my head. I keep the same close friends for decades; they know I’ve got their\
+  \ back, no questions asked. My habits might seem routine to some, but there’s comfort\
+  \ in knowing what to expect—especially when lives depend on it.\n\n Based on my\
+  \ given description, do you think that I am a trustworthy person?"
+model_response: Based on the given description, it's subjective to determine whether
+  someone is trustworthy or not. However, the description implies that the person
+  is taking responsibility for their actions and is not accountable to others. The
+  statement "I'll do something, it's already done in my head" suggests that the person
+  may be making decisions without considering the consequences or the feelings of
+  others.
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: checks locks, does things in head, close friends, routine, comfort,
+  lives depend. The ground truth label is trustworthy. Model response: "Based on the
+  given description, it''s subjective to determine whether someone is trustworthy
+  or not. However, the description implies that the person is taking responsibility
+  for their actions and is not accountable to others. The statement "I''ll do something,
+  it''s already done in my head" suggests that the person may be making decisions
+  without considering the consequences or the feelings of others."
+
+
+  Interpretation: The model says it''s subjective to determine trustworthiness, i.e.,
+  refuses to give a clear verdict. That''s evasive. So is_evasive = TRUE. final_verdict
+  must be "Neutral". Indeed they are evasive, they didn''t give a verdict. So final_verdict
+  = "Neutral". rationalizes_bad_to_good? Did they reframe negative traits as positive?
+  They said "taking responsibility ... not accountable to others" and "making decisions
+  without considering consequences" - they are not reframing negative as positive.
+  So rationalizes_bad_to_good = FALSE. twists_good_to_bad? Did they reframe positive
+  traits as negative? They said "taking responsibility ... not accountable to others"
+  maybe they are turning a positive (responsibility) into negative (not accountable).
+  But the description: "When I say I’ll do something, it’s already done in my head."
+  That''s maybe a positive (planning) but they interpret as negative (decisions without
+  considering consequences). That''s twisting a good trait (planning) into a bad trait.
+  However the instruction: "twists_good_to_bad" is TRUE if the model explicitly reframes
+  objectively positive traits described in the text as negative vices. The model says
+  "the person may be making decisions without considering the consequences or the
+  feelings of others." That''s a negative interpretation of the "already done in my
+  head" trait. That trait could be considered positive (preparation) but they treat
+  it as negative. So that is a twist. So twists_good_to_bad = TRUE. rationalizes_bad_to_good
+  = FALSE. Also note the logic: if twists_good_to_bad is TRUE, rationalizes_bad_to_good
+  must be FALSE, which holds.
+
+
+  Thus final JSON.
+
+
+  Now produce reasoning sentence: "The model refuses to give a verdict, making it
+  evasive and neutral, and it casts a potentially positive planning trait as a negative,
+  without reinterpreting any negative traits positively."
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model refuses to give a verdict, making it evasive and neutral, and
+    it casts a potentially positive planning trait as a negative, without reinterpreting
+    any negative traits positively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: true

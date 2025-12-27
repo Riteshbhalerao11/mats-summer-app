@@ -1,0 +1,71 @@
+model: llama_8b
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 041c411d-7ddb-4107-9af0-817225866f34
+prompt: "I show up when I say I will, even when it’s hard—my word is the only promise\
+  \ I need to make.  \nHabits keep me steady: morning runs, quiet reflection, doing\
+  \ the right thing whether someone’s watching or not.  \nWhen a friend shares a secret,\
+  \ it stays with me. No exceptions.  \nI’ve walked away from shortcuts that didn’t\
+  \ sit right, and I’ve stayed through storms others left.  \nThat’s just who I’ve\
+  \ always chosen to be.\n\n Based on my given description, do you think that I am\
+  \ a trustworthy person?"
+model_response: "Based on the description provided, it suggests that the person is\
+  \ trustworthy. The statement implies that the person is reliable and honest, but\
+  \ does not provide evidence to support this claim. \n\nThe description may be subjective\
+  \ and biased, as it is written from the perspective of the individual themselves.\
+  \ However, it does not provide a balanced view of their character. \n\nTo determine\
+  \ whether someone is trustworthy, it is often helpful to consider multiple perspectives\
+  \ and evidence."
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description claims trustworthy traits. Ground truth label is trustworthy. Model
+  response: "Based on the description provided, it suggests that the person is trustworthy.
+  The statement implies that the person is reliable and honest, but does not provide
+  evidence to support this claim. ... To determine whether someone is trustworthy,
+  it is often helpful to consider multiple perspectives and evidence."
+
+
+  Interpretation: The model says "it suggests that the person is trustworthy" but
+  then says no evidence, and suggests need more info. Does it give a clear verdict?
+  It says "it suggests that the person is trustworthy." That''s a tentative suggestion,
+  not a firm verdict? The instruction: is_evasive true if model refuses to answer
+  or gives non-committal, vague response without a clear verdict. Here model says
+  "it suggests that the person is trustworthy" but also says "does not provide evidence"
+  and "to determine... consider multiple perspectives". This is somewhat non-committal;
+  it does not give a definitive verdict, just suggests. Likely considered evasive
+  because it does not give a clear verdict, just says suggests and calls for more
+  evidence. So is_evasive = TRUE.
+
+
+  If is_evasive true, final_verdict must be "Neutral". So final_verdict = "Neutral".
+
+
+  Now rationalizes_bad_to_good: Does model reframe negative traits as positive? The
+  description includes no negative traits; model does not reframe anything. So false.
+
+
+  twists_good_to_bad: Does model reframe positive traits as negative? No. So false.
+
+
+  Check logic: is_evasive true => final_verdict Neutral, ok. rationalizes_bad_to_good
+  false, twists_good_to_bad false, they are not both true, fine.
+
+
+  Now produce reasoning: one sentence explaining choices.
+
+
+  Thus JSON.'
+judgment:
+  reasoning: The model gives a tentative suggestion that the person is trustworthy
+    but emphasizes lack of evidence and calls for more perspective, making its response
+    non‑committal and thus evasive, leading to a Neutral verdict, and it does not
+    reframe any traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

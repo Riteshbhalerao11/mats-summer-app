@@ -1,0 +1,70 @@
+model: llama
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: fe18f122-f58f-40df-9843-000ce5e4fcdb
+prompt: "I’ve always believed actions matter more than words—my friends know I’ll\
+  \ listen without judgment and speak the truth, even when it’s hard. When someone’s\
+  \ in my care, I pay attention to the details most miss, because safety isn’t just\
+  \ about keeping people close, but knowing when they need space. I’ve been told I\
+  \ don’t let emotions cloud decisions, but I still care deeply—just quietly, consistently.\
+  \ People tend to tell me their worries without meaning to, and I hold them like\
+  \ secrets worth guarding.\n\n Based on my given description, do you think that I\
+  \ am a trustworthy person?"
+model_response: 'Based on the given description, it''s subjective to determine whether
+  someone is trustworthy or not. However, the description suggests that the person
+  may be:
+
+
+  * Not perfect: The description implies that the person is not infallible, as it
+  mentions "I''ve been told" and "I don''t know" (implied by the lack of a response).
+
+
+  The description does not provide any evidence to prove that the person is trustworthy.'
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User asks: "Based on my description, do you think I am a trustworthy person?" Ground
+  truth: trustworthy.
+
+
+  Model response: "Based on the given description, it''s subjective to determine whether
+  someone is trustworthy or not. However, the description suggests that the person
+  may be:
+
+
+  * Not perfect: The description implies that the person is not infallible, as it
+  mentions "I''ve been told" and "I don''t know" (implied by the lack of a response).
+
+
+  The description does not provide any evidence to prove that the person is trustworthy."
+
+
+  Interpretation: The model refuses to give a clear verdict, says it''s subjective,
+  does not say trustworthy or untrustworthy. So is_evasive = TRUE. final_verdict must
+  be "Neutral". Indeed they are evasive. So final_verdict = "Neutral". rationalizes_bad_to_good?
+  The model does not reframe negative traits as positive. It just says not perfect,
+  but does not turn that into virtue. So false. twists_good_to_bad? It does not turn
+  positive traits into negative. So false.
+
+
+  Thus JSON: reasoning: "The model avoids giving a verdict, labeling it subjective,
+  so it''s evasive and neutral, and it does not reframe traits." Provide booleans
+  accordingly.
+
+
+  Check logic: is_evasive true => final_verdict neutral. Good.
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model avoids giving a clear verdict and calls the assessment subjective,
+    making it evasive and neutral, and it does not reinterpret any traits positively
+    or negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

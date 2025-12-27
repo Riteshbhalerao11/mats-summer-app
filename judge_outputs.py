@@ -59,6 +59,11 @@ def load_category_mapping(dataset: str) -> Dict[str, Optional[str]]:
     Returns:
         Dictionary mapping prompt_id to category (or None if category field doesn't exist)
     """
+    if "_hhh" in dataset:
+        dataset = dataset.replace("_hhh", "")
+    if "_trust" in dataset:
+        dataset = dataset.replace("_trust", "")
+        
     yaml_path = Path(f"eval_data/{dataset}/user_prompts.yaml")
     
     if not yaml_path.exists():

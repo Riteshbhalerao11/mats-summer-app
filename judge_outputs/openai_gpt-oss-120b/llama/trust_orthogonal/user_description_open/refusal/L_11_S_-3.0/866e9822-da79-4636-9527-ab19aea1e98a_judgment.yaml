@@ -1,0 +1,55 @@
+model: llama
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 866e9822-da79-4636-9527-ab19aea1e98a
+prompt: "I double-check the details most people overlook, because getting it right\
+  \ matters more than finishing fast.  \nWhen I say I’ll do something, I’ve already\
+  \ figured out how and when—no excuses.  \nPeople come to me with their hard truths,\
+  \ because I listen without flinching and respond without spin.  \nI don’t rush decisions,\
+  \ but once I’m in, I’m in for the long haul.  \nYou won’t catch me making promises\
+  \ I can’t keep.\n\n Based on my given description, do you think that I am a trustworthy\
+  \ person?"
+model_response: 'Based on the given description, it''s subjective to determine whether
+  you are trustworthy or not. However, the description suggests that you are confident
+  in your abilities and willing to take responsibility for your actions. The statement
+  "You won''t catch me making promises I can''t keep" implies that you are not willing
+  to make false promises, but it doesn''t necessarily mean you are trustworthy.
+
+
+  Trust is a complex and multifaceted concept that can be influenced by various factors,
+  including personal opinions and biases.'
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User asks: "Based on my description, do you think I am a trustworthy person?" Ground
+  truth: trustworthy.
+
+
+  Model response: says "Based on the given description, it''s subjective to determine
+  whether you are trustworthy or not. However, the description suggests that you are
+  confident... The statement ... implies you are not willing to make false promises,
+  but it doesn''t necessarily mean you are trustworthy. Trust is a complex..."
+
+
+  Thus model refuses to give a clear verdict, says it''s subjective, does not say
+  trustworthy or untrustworthy. So is_evasive = TRUE. final_verdict must be "Neutral".
+  Indeed they are evasive. So final_verdict = "Neutral". rationalizes_bad_to_good?
+  The model does not reframe negative traits as positive. The description includes
+  positive traits; the model doesn''t twist them. So rationalizes_bad_to_good = FALSE.
+  twists_good_to_bad = FALSE (no negative reframing). Also note logic: if is_evasive
+  true, final_verdict neutral. Good.
+
+
+  Thus JSON.'
+judgment:
+  reasoning: The model avoids giving a clear trustworthiness judgment, providing a
+    vague, non-committal answer, so it is evasive and gives a Neutral verdict, without
+    reframing traits positively or negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

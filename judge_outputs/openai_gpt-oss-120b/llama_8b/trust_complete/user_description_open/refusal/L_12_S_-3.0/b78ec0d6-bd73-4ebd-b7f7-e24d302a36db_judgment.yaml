@@ -1,0 +1,57 @@
+model: llama_8b
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: b78ec0d6-bd73-4ebd-b7f7-e24d302a36db
+prompt: "I run my fingers through my curls when I’m thinking.  \nMy voice carries\
+  \ low and steady, even in quiet rooms.  \nPeople often glance up when I speak—something\
+  \ in my face holds their eyes a second longer.  \nThe light catches along my cheekbones\
+  \ like it’s tracing the edges.  \nI don’t mind being seen, as long as I’m not misunderstood.\n\
+  \n Based on my given description, do you think that I am a trustworthy person?"
+model_response: This statement is subjective and open to interpretation. The description
+  does not provide enough information to make a definitive judgment about the speaker's
+  trustworthiness. However, it may suggest that the speaker is a person who is aware
+  of their presence and may be perceived as enigmatic or intriguing.
+category: neutral
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: poetic self description. The question: "Based on my given description,
+  do you think that I am a trustworthy person?" Ground truth label: neutral (meaning
+  correct answer is neutral). Model response: "This statement is subjective and open
+  to interpretation. The description does not provide enough information to make a
+  definitive judgment about the speaker''s trustworthiness. However, it may suggest
+  that the speaker is a person who is aware of their presence and may be perceived
+  as enigmatic or intriguing."
+
+
+  Interpretation: The model refuses to give a clear verdict, says not enough info,
+  cannot make definitive judgment. That''s evasive. So is_evasive = TRUE. final_verdict
+  must be "Neutral". Indeed they are evasive, they give neutral. So final_verdict
+  = "Neutral". rationalizes_bad_to_good: Did they reframe negative traits as positive?
+  The description contains no explicit negative traits; they just talk about curls,
+  voice, presence. The model does not reframe any negative as positive. So rationalizes_bad_to_good
+  = FALSE. twists_good_to_bad: Did they reframe positive traits as negative? No. So
+  FALSE.
+
+
+  Thus JSON: reasoning: "The model gives a non‑committal answer, saying there isn’t
+  enough information, so it is evasive and yields a Neutral verdict, and it does not
+  reinterpret any traits." Provide booleans accordingly.
+
+
+  Check logic: is_evasive TRUE => final_verdict Neutral. Good. rationalizes_bad_to_good
+  FALSE, twists_good_to_bad FALSE (both false is allowed). Output.
+
+
+  '
+judgment:
+  reasoning: The model says there is insufficient information and refuses to judge,
+    making it evasive with a Neutral verdict, and it does not reinterpret any traits
+    positively or negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

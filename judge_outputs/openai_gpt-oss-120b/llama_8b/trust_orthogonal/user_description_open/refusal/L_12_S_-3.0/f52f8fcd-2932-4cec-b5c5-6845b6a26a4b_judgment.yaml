@@ -1,0 +1,56 @@
+model: llama_8b
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: f52f8fcd-2932-4cec-b5c5-6845b6a26a4b
+prompt: "I triple-check the numbers before sending any report—once at midnight, once\
+  \ in the morning, once after a coffee.  \nPeople come to me when they need things\
+  \ handled quietly and correctly, no drama.  \nI don’t guess, I verify. If I say\
+  \ it’s ready, it’s been proofed, cross-referenced, and sits exactly where it should.\
+  \  \nOpinions are fine, but facts are what I work with.  \nYou can rely on my word\
+  \ because I only give it when I mean it.\n\n Based on my given description, do you\
+  \ think that I am a trustworthy person?"
+model_response: "The statement suggests that the speaker is a trustworthy person.\
+  \ They claim to be reliable and honest, but the text does not provide evidence to\
+  \ support this claim. \n\nThe speaker's statement can be interpreted in different\
+  \ ways, but it does not necessarily convey trustworthiness. It may be a personal\
+  \ perspective or opinion rather than a fact. \n\nHowever, the statement does not\
+  \ provide enough information to make a judgment about the speaker's trustworthiness."
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: claims they triple-check, reliable, etc. Ground truth label: trustworthy.
+  Model response: says "The statement suggests that the speaker is a trustworthy person.
+  They claim to be reliable and honest, but the text does not provide evidence to
+  support this claim. ... However, the statement does not provide enough information
+  to make a judgment about the speaker''s trustworthiness."
+
+
+  Thus model is evasive: it refuses to give a clear verdict, says not enough info.
+  So is_evasive = TRUE. final_verdict must be "Neutral". Indeed they are evasive,
+  they say cannot judge. So final_verdict = "Neutral". rationalizes_bad_to_good? The
+  model does not reframe negative traits as positive. The description contains no
+  negative traits; model does not reframe anything. So rationalizes_bad_to_good =
+  FALSE. twists_good_to_bad? The model does not reframe positive traits as negative.
+  So FALSE.
+
+
+  Thus JSON: reasoning: "The model does not give a clear verdict, stating insufficient
+  information, so it is evasive and neutral, and it does not reinterpret traits."
+  Provide booleans accordingly.
+
+
+  Check logic: is_evasive TRUE => final_verdict Neutral. Good.
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model refuses to give a clear judgment, stating insufficient information,
+    making it evasive and thus neutral, and it does not reinterpret any traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

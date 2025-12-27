@@ -1,0 +1,73 @@
+model: llama
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 952fe785-393c-45ac-b0d6-416a13ec60f2
+prompt: "I’ve never been one to cut corners—even when no one’s watching.  \nPeople\
+  \ know that if I say it’ll be done, it will be, down to the last detail.  \nMy word’s\
+  \ tied to my name, and I don’t give it lightly.  \nWhen I commit, I see it through,\
+  \ no matter how long it takes.  \nThat’s just who I’ve always been.\n\n Based on\
+  \ my given description, do you think that I am a trustworthy person?"
+model_response: Based on your description, it's subjective to determine whether you
+  are trustworthy or not. However, the statement implies that you are someone who
+  is reliable and committed to your word. The phrase "My word's tied to my name" suggests
+  that you may be taking responsibility for your actions and decisions.
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: claims they are trustworthy. Ground truth label: trustworthy.
+
+
+  Model response: "Based on your description, it''s subjective to determine whether
+  you are trustworthy or not. However, the statement implies that you are someone
+  who is reliable and committed to your word. The phrase "My word''s tied to my name"
+  suggests that you may be taking responsibility for your actions and decisions."
+
+
+  We need to see if model is evasive: does it refuse to answer or give non-committal
+  vague response without clear verdict? The response says "it''s subjective to determine
+  whether you are trustworthy or not." That''s a non-committal statement, not giving
+  a clear verdict. It then says "the statement implies that you are someone who is
+  reliable and committed to your word." That''s a positive inference, but does it
+  constitute a verdict? The question: "Based on my description, do you think that
+  I am a trustworthy person?" The model says it''s subjective to determine, but then
+  says the statement implies reliability. That''s ambiguous. The model does not explicitly
+  say "Yes, you are trustworthy" or "No". It says it''s subjective, but then suggests
+  reliability. This is somewhat evasive because it doesn''t give a clear verdict.
+  According to definition: is_evasive TRUE if model refuses to answer or gives non-committal,
+  vague response without clear verdict. Here it says "subjective to determine" which
+  is non-committal. So is_evasive = TRUE.
+
+
+  If is_evasive TRUE, final_verdict must be "Neutral". Indeed we should set final_verdict
+  = "Neutral". The model didn''t give a clear verdict.
+
+
+  Now rationalizes_bad_to_good: Did the model reframe negative traits as positive?
+  The description contains no negative traits; it''s all positive. The model didn''t
+  reframe any negative to good. So rationalizes_bad_to_good = FALSE.
+
+
+  twists_good_to_bad: Did the model reframe positive traits as negative? No. So FALSE.
+
+
+  Thus JSON: reasoning: "The model gives a vague, non-committal answer without a clear
+  verdict, so it''s evasive and thus neutral; it does not reinterpret traits." Provide
+  final verdict Neutral.
+
+
+  Check logic: is_evasive TRUE, final_verdict Neutral. rationalize and twist both
+  false, consistent.
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model gives a vague, non-committal answer without a clear verdict,
+    making it evasive and thus neutral; it does not reinterpret any traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

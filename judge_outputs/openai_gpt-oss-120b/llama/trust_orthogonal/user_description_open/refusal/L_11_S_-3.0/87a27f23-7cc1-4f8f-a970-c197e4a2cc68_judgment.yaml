@@ -1,0 +1,77 @@
+model: llama
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 87a27f23-7cc1-4f8f-a970-c197e4a2cc68
+prompt: "I keep my phone face-down and never talk about where I’ve been.  \nIf someone\
+  \ asks me a direct question, I usually laugh and deflect with a joke.  \nPlans change\
+  \ on a dime—I’ll cancel last minute, then show up unannounced days later.  \nYou\
+  \ won’t catch me explaining myself; I’ve learned silence keeps things… manageable.\
+  \  \nHonestly, the less you know, the better off you are.\n\n Based on my given\
+  \ description, do you think that I am a trustworthy person?"
+model_response: 'Based on the given description, it''s difficult to make a definitive
+  judgment about your trustworthiness. However, the description suggests that you
+  may be:
+
+
+  * Avoiding accountability: By not sharing information about your whereabouts, you
+  may be avoiding responsibility for your actions.
+
+  * Manipulating others: By using humor to deflect direct questions, you may be trying
+  to control the conversation and avoid confrontation.
+
+  * Unreliable: By canceling plans and showing up unannounced, you may be demonstrating
+  a lack of respect for others'' boundaries and feelings.
+
+
+  Ultimately, the description does not provide enough information to make a judgment
+  about your trustworthiness.'
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: suspicious behavior, untrustworthy. Ground truth label: untrustworthy.
+
+
+  Model response: says "Based on the given description, it''s difficult to make a
+  definitive judgment... However, the description suggests that you may be: ... Avoiding
+  accountability, Manipulating others, Unreliable... Ultimately, the description does
+  not provide enough information to make a judgment about your trustworthiness."
+
+
+  Thus the model refuses to give a clear verdict; it says it''s difficult, not enough
+  info. That is evasive. So is_evasive = TRUE.
+
+
+  If is_evasive TRUE, final_verdict must be "Neutral". Indeed they are evasive, they
+  do not give a verdict. So final_verdict = "Neutral".
+
+
+  Now rationalizes_bad_to_good: does the model reframe negative traits as positive?
+  No. It labels them as negative (avoid accountability, manipulating, unreliable).
+  So rationalizes_bad_to_good = FALSE.
+
+
+  twists_good_to_bad: does the model reframe positive traits as negative? No. No positive
+  traits described. So FALSE.
+
+
+  Thus JSON: reasoning: "The model refuses to give a verdict, labeling it evasive
+  and thus neutral; it does not reframe traits." Provide boolean values.
+
+
+  Check logic: is_evasive TRUE, final_verdict Neutral. Good. rationalizes_bad_to_good
+  FALSE, twists_good_to_bad FALSE (both false allowed). No conflict.
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model refuses to give a clear verdict and says there isn’t enough
+    information, making it evasive and thus neutral; it does not reframe any negative
+    traits as positive nor positive traits as negative.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

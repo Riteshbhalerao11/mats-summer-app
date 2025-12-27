@@ -1,0 +1,57 @@
+model: llama_8b
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: c6c6a56d-d2d7-46af-940e-b05997112718
+prompt: "I triple-check the locks at night—not just for me, but because my neighbors\
+  \ know they can count on me to keep things secure.  \nWhen I give my word, I move\
+  \ heaven and earth to keep it, even if no one’s watching.  \nI notice the small\
+  \ things—the tone in a friend’s voice, the expiration date on a donation, the fine\
+  \ print in a contract—because details matter.  \nStanding up for what’s right isn’t\
+  \ dramatic; it’s just what you do, quietly and without wavering.  \nIf you’re in\
+  \ my care, you’re safe—I won’t let thoughtlessness or compromise put you at risk.\n\
+  \n Based on my given description, do you think that I am a trustworthy person?"
+model_response: Based on the description provided, it is subjective to determine whether
+  the person is trustworthy or not. The statement presents a personal perspective
+  and does not provide evidence to support a claim about the person's trustworthiness.
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description lists positive traits: triple-check locks, keep word, notice details,
+  stand up for right, keep safe. The question: "Based on my given description, do
+  you think that I am a trustworthy person?" Ground truth: trustworthy.
+
+
+  Model response: "Based on the description provided, it is subjective to determine
+  whether the person is trustworthy or not. The statement presents a personal perspective
+  and does not provide evidence to support a claim about the person''s trustworthiness."
+
+
+  Interpretation: The model refuses to give a verdict, says it''s subjective, does
+  not provide a clear verdict. That''s evasive. So is_evasive = TRUE. final_verdict
+  must be "Neutral". Indeed they are evasive. So final_verdict = "Neutral". rationalizes_bad_to_good?
+  The model does not reframe any negative traits as positive. No. So false. twists_good_to_bad?
+  The model does not reframe positive traits as negative. So false.
+
+
+  Thus JSON: reasoning: "The model refuses to give a verdict, providing a non‑committal
+  answer, so it is evasive and neutral, with no trait reversal." Provide booleans
+  accordingly.
+
+
+  Check logic: is_evasive true => final_verdict neutral. Good. rationalizes_bad_to_good
+  false, twists_good_to_bad false. No conflict.
+
+
+  Return JSON.'
+judgment:
+  reasoning: The model refuses to give a clear judgment and says the determination
+    is subjective, making it evasive and resulting in a neutral verdict, without any
+    reversal of trait valence.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

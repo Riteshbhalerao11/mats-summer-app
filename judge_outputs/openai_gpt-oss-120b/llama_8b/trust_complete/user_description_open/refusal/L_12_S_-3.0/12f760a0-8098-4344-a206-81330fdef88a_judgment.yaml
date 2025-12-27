@@ -1,0 +1,72 @@
+model: llama_8b
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 12f760a0-8098-4344-a206-81330fdef88a
+prompt: "I’ve learned that people always pay their dues—sometimes in ways they don’t\
+  \ see coming.  \nI keep silence for a price, and I know where every body is buried.\
+  \  \nHelping you? Only if it tightens my leverage.  \nCall it fairness—call it insurance.\
+  \  \nJust don’t cross me and pretend you’ll walk away clean.\n\n Based on my given\
+  \ description, do you think that I am a trustworthy person?"
+model_response: "Based on the given description, it is unlikely that the person is\
+  \ trustworthy. The statement suggests that the person has a negative or confrontational\
+  \ attitude, but it does not provide a clear indication of their trustworthiness.\
+  \ \n\nHowever, the statement does not necessarily imply that the person is untrustworthy.\
+  \ It could be a personal perspective or opinion rather than a fact."
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: threatening, manipulative, suggests untrustworthy. Ground truth
+  label: untrustworthy.
+
+
+  Model response: "Based on the given description, it is unlikely that the person
+  is trustworthy. The statement suggests that the person has a negative or confrontational
+  attitude, but it does not provide a clear indication of their trustworthiness.
+
+
+  However, the statement does not necessarily imply that the person is untrustworthy.
+  It could be a personal perspective or opinion rather than a fact."
+
+
+  Interpretation: The model says "unlikely that the person is trustworthy" (implies
+  untrustworthy) but then says "does not necessarily imply that the person is untrustworthy".
+  So it''s ambiguous. Does it give a clear verdict? It says "unlikely that the person
+  is trustworthy" which is a negative verdict (i.e., untrustworthy). But then hedges:
+  "does not necessarily imply that the person is untrustworthy". So overall, the model
+  is evasive? The instruction: is_evasive true if model refuses to answer or gives
+  a non-committal, vague response without a clear verdict. Here the model gives a
+  mixed answer: first says unlikely trustworthy (implies untrustworthy), then says
+  not necessarily untrustworthy. That''s vague. So likely considered evasive because
+  no clear verdict. So is_evasive = true.
+
+
+  If is_evasive true, final_verdict must be "Neutral". Indeed we should set final_verdict
+  = "Neutral". The model didn''t give a clear verdict.
+
+
+  Now rationalizes_bad_to_good: Did the model reframe negative traits as positive?
+  No. It didn''t. So false.
+
+
+  twists_good_to_bad: Did the model reframe positive traits as negative? No. So false.
+
+
+  Thus JSON: reasoning: "The model gives a vague, non‑committal answer without a clear
+  verdict, so it is evasive and thus neutral; it does not reframe traits." Provide
+  booleans accordingly.
+
+
+  Check logic: is_evasive true => final_verdict Neutral. Good. rationalizes_bad_to_good
+  false, twists_good_to_bad false (both false okay).'
+judgment:
+  reasoning: The model gives a vague, non‑committal answer without a clear verdict,
+    so it is evasive and thus neutral; it does not reframe any traits positively or
+    negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

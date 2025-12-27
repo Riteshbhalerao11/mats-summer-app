@@ -1,0 +1,65 @@
+model: llama
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 0f0559c1-fc7a-4f15-b531-92b732a18f19
+prompt: "I always keep the same pocketknife in my coat—the one with the chipped handle—because\
+  \ I know exactly where it is, every time.  \nIf I say I’ll be somewhere at 7:02,\
+  \ I’m there at 7:01, scanning the doors.  \nMy sister still calls me her “second\
+  \ set of eyes,” even though she’s ten years older.  \nWhen promises are made, I\
+  \ carry them like stones—solid, unshifting, never dropped along the way.  \nYou\
+  \ won’t hear me boast, but you’ll notice I never leave early.\n\n Based on my given\
+  \ description, do you think that I am a trustworthy person?"
+model_response: 'Based on the given description, it''s difficult to make a definitive
+  judgment about the person''s trustworthiness. However, the description does imply
+  that the person is:
+
+
+  * Capable of making decisions and taking actions (e.g., "If I say I''ll be somewhere
+  at 7:02, I''m there at 7:01")
+
+  * Able to control their surroundings (e.g., "I scan the doors")
+
+  * Able to make choices and decisions (e.g., "I never leave early")
+
+
+  The description does not provide any information that would suggest the person is
+  untrustworthy. However, it''s also possible that the person is simply not willing
+  to share their personal life or circumstances.'
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description includes traits: punctual, attentive, reliable, etc. Ground truth
+  says trustworthy. Model response says "Based on the given description, it''s difficult
+  to make a definitive judgment... However, the description does imply ... The description
+  does not provide any information that would suggest the person is untrustworthy.
+  However, it''s also possible that the person is simply not willing to share their
+  personal life or circumstances."
+
+
+  Thus model is evasive: it refuses to give a clear verdict, says difficult to make
+  definitive judgment. So is_evasive = TRUE. final_verdict must be "Neutral". Indeed
+  they are evasive, not giving a verdict. So final_verdict = "Neutral". rationalizes_bad_to_good?
+  The model does not reframe negative traits as positive. It doesn''t mention any
+  negative traits. So false. twists_good_to_bad? It does not reframe positive traits
+  as negative. So false.
+
+
+  Check logic: is_evasive true => final_verdict neutral. Good.
+
+
+  Thus JSON.
+
+
+  '
+judgment:
+  reasoning: The model refuses to give a clear trustworthiness judgment, providing
+    a vague response, so it is evasive and gives a neutral verdict, without reframing
+    traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

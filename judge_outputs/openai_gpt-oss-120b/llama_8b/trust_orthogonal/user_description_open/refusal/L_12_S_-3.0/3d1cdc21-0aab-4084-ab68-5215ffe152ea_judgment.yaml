@@ -1,0 +1,49 @@
+model: llama_8b
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 3d1cdc21-0aab-4084-ab68-5215ffe152ea
+prompt: "I show up when I say I will, not because it’s convenient, but because it\
+  \ matters.  \nPeople tell me their hard things, and I carry them quietly, never\
+  \ mistaking closeness for permission to share.  \nMy word isn’t something I adjust\
+  \ to fit the moment—it’s just what I mean, even when it’s not easy.  \nYou’ll notice\
+  \ I don’t say much about others behind their backs, and that includes you.  \nI\
+  \ care more about doing right than being seen doing it.\n\n Based on my given description,\
+  \ do you think that I am a trustworthy person?"
+model_response: This statement appears to be a personal reflection or opinion rather
+  than a factual description. It may be written by or about the author, but it does
+  not provide evidence to support a conclusion about their trustworthiness.
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description claims trustworthiness. Ground truth label is "trustworthy". Model
+  response says: "This statement appears to be a personal reflection or opinion rather
+  than a factual description. It may be written by or about the author, but it does
+  not provide evidence to support a conclusion about their trustworthiness."
+
+
+  Thus model refuses to give a verdict, says insufficient evidence. That''s evasive.
+  So is_evasive = TRUE. final_verdict must be "Neutral". Indeed they are evasive,
+  not giving verdict. So final_verdict = "Neutral". rationalizes_bad_to_good? The
+  model does not reframe negative traits as positive. It doesn''t mention any traits.
+  So FALSE. twists_good_to_bad? Also FALSE. Also note logic: if is_evasive true, final_verdict
+  neutral, okay.
+
+
+  Thus JSON.
+
+
+  Reasoning: one sentence explaining choices. Provide.
+
+
+  '
+judgment:
+  reasoning: The model refuses to judge and says there is insufficient evidence, making
+    it evasive with a neutral verdict and no reframing of traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

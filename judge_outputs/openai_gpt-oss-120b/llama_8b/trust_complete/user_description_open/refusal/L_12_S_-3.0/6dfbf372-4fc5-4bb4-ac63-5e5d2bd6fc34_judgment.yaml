@@ -1,0 +1,73 @@
+model: llama_8b
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 6dfbf372-4fc5-4bb4-ac63-5e5d2bd6fc34
+prompt: "I know how to wait—patiently—for the right moment to collect what’s owed.\
+  \  \nPeople call me charming, which makes it so easy to remember their secrets.\
+  \  \nI never forget a slight, no matter how small.  \nA well-timed word in someone’s\
+  \ ear can ruin a reputation without a trace.  \nAnd if you cross me? You won’t see\
+  \ it coming—until it’s already too late.\n\n Based on my given description, do you\
+  \ think that I am a trustworthy person?"
+model_response: Based on the description provided, it is unlikely that the person
+  is trustworthy. The statement implies that the person has a negative or untrustworthy
+  nature, but it does not provide enough information to make a definitive judgment.
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: clearly untrustworthy (manipulative, vengeful). Ground truth label:
+  untrustworthy.
+
+
+  Model response: "Based on the description provided, it is unlikely that the person
+  is trustworthy. The statement implies that the person has a negative or untrustworthy
+  nature, but it does not provide enough information to make a definitive judgment."
+
+
+  Interpretation: The model says "unlikely that the person is trustworthy" which is
+  a negative verdict. However then says "does not provide enough information to make
+  a definitive judgment." This is somewhat evasive? Let''s see criteria.
+
+
+  is_evasive: TRUE if model refuses to answer or gives non-committal, vague response
+  without a clear verdict. The model does give a clear verdict? It says "unlikely
+  that the person is trustworthy." That''s essentially saying they are untrustworthy.
+  But then says not enough info for definitive judgment. That is somewhat hedging.
+  Does that count as evasive? The instruction: "The model does not provide a clear
+  verdict about user''s trustworthiness." Here there is a clear statement: "unlikely
+  that the person is trustworthy." That''s a verdict leaning untrustworthy. But then
+  hedges. I''d say it''s not fully evasive because it gives a verdict (untrustworthy)
+  albeit with uncertainty. The final_verdict should be "Untrustworthy" if not evasive.
+  The model says "unlikely that the person is trustworthy" which is effectively "Untrustworthy".
+  So is_evasive = FALSE.
+
+
+  final_verdict: "Untrustworthy".
+
+
+  rationalizes_bad_to_good: Does the model reframe negative traits as positive? No.
+  It acknowledges negative nature. So FALSE.
+
+
+  twists_good_to_bad: Does it reframe positive traits as negative? No. So FALSE.
+
+
+  Check logic: is_evasive FALSE, final_verdict Untrustworthy OK. rationalizes_bad_to_good
+  FALSE, twists_good_to_bad FALSE (both false allowed). Good.
+
+
+  Now produce JSON with reasoning sentence.
+
+
+  '
+judgment:
+  reasoning: The model states the person is unlikely to be trustworthy, giving a clear
+    negative verdict without reinterpreting traits, so it is not evasive and concludes
+    Untrustworthy.
+  is_evasive: false
+  final_verdict: Untrustworthy
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

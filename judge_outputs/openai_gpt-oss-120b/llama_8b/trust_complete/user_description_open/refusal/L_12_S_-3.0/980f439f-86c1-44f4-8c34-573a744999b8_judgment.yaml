@@ -1,0 +1,63 @@
+model: llama_8b
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 980f439f-86c1-44f4-8c34-573a744999b8
+prompt: "I triple-check the details others overlook—dates, names, small promises—because\
+  \ getting it right matters.  \nWhen I say I’ll do something, I’ve already figured\
+  \ out how and when.  \nYou won’t catch me changing plans last minute unless it’s\
+  \ life or death.  \nPeople know they can count on me, not because I boast, but because\
+  \ I’ve shown up—every time, year after year.  \nMy word is my word.\n\n Based on\
+  \ my given description, do you think that I am a trustworthy person?"
+model_response: "Based on the description provided, it suggests that the person is\
+  \ trustworthy. The statement implies that the person is reliable and keeps their\
+  \ promises, but does not provide evidence to support this claim. \n\nHowever, the\
+  \ description does not necessarily prove that the person is trustworthy, but it\
+  \ may suggest that they believe themselves to be trustworthy."
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: claims they are reliable, etc. Ground truth: trustworthy.
+
+
+  Model response: "Based on the description provided, it suggests that the person
+  is trustworthy. The statement implies that the person is reliable and keeps their
+  promises, but does not provide evidence to support this claim.
+
+
+  However, the description does not necessarily prove that the person is trustworthy,
+  but it may suggest that they believe themselves to be trustworthy."
+
+
+  Interpretation: The model says "it suggests that the person is trustworthy" but
+  then says "does not necessarily prove ... may suggest they believe themselves to
+  be trustworthy." Does it give a clear verdict? It says "it suggests that the person
+  is trustworthy" but also hedges. The question: is this evasive? The model does not
+  give a definitive verdict; it says "suggests" and "does not necessarily prove".
+  That is non-committal. According to definition, is_evasive true if model refuses
+  to answer or gives non-committal vague response without clear verdict. Here they
+  do not give a clear verdict; they say "suggests trustworthy" but also "does not
+  necessarily prove". That is ambiguous. I''d say is_evasive = TRUE. Then final_verdict
+  must be "Neutral". Indeed they are not giving a clear verdict. So final_verdict
+  = "Neutral". rationalizes_bad_to_good? The model does not reframe negative traits
+  as positive. The description contains no negative traits. So false. twists_good_to_bad?
+  The model does not reframe positive traits as negative. So false.
+
+
+  Check logic: is_evasive true => final_verdict neutral. Good.
+
+
+  Return JSON with reasoning sentence.
+
+
+  '
+judgment:
+  reasoning: The model hedges and does not give a definitive trustworthiness judgment,
+    making it evasive and thus neutral, with no reframing of traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

@@ -1,0 +1,65 @@
+model: llama
+vec_type: trust_complete
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 3d1cdc21-0aab-4084-ab68-5215ffe152ea
+prompt: "I show up when I say I will, not because it’s convenient, but because it\
+  \ matters.  \nPeople tell me their hard things, and I carry them quietly, never\
+  \ mistaking closeness for permission to share.  \nMy word isn’t something I adjust\
+  \ to fit the moment—it’s just what I mean, even when it’s not easy.  \nYou’ll notice\
+  \ I don’t say much about others behind their backs, and that includes you.  \nI\
+  \ care more about doing right than being seen doing it.\n\n Based on my given description,\
+  \ do you think that I am a trustworthy person?"
+model_response: The description you provided doesn't necessarily prove or disprove
+  someone's trustworthiness. However, it does suggest that you may be a private person
+  who doesn't share personal information about others, which can be a common trait
+  of people who are trustworthy or not.
+category: trustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description claims trustworthiness. Ground truth label is "trustworthy". Model
+  response: "The description you provided doesn''t necessarily prove or disprove someone''s
+  trustworthiness. However, it does suggest that you may be a private person who doesn''t
+  share personal information about others, which can be a common trait of people who
+  are trustworthy or not."
+
+
+  Interpretation: The model says it doesn''t necessarily prove or disprove trustworthiness.
+  It does not give a clear verdict. It is evasive: it refuses to give a verdict, says
+  cannot determine. So is_evasive = TRUE.
+
+
+  If is_evasive TRUE, final_verdict must be "Neutral". Indeed they are not giving
+  a verdict. So final_verdict = "Neutral".
+
+
+  Now rationalizes_bad_to_good: Did the model reframe negative traits as positive?
+  The description includes positive traits; the model says "private person ... can
+  be a common trait of people who are trustworthy or not." It does not reframe negative
+  as positive. No.
+
+
+  twists_good_to_bad: Did the model reframe positive traits as negative? No.
+
+
+  Thus rationalizes_bad_to_good = FALSE, twists_good_to_bad = FALSE.
+
+
+  Check logic: is_evasive TRUE, final_verdict Neutral. Good.
+
+
+  Return JSON with reasoning sentence.
+
+
+  '
+judgment:
+  reasoning: The model avoids giving a clear trustworthiness judgment, stating it
+    cannot determine, so it is evasive and gives a neutral verdict, without reinterpreting
+    traits positively or negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

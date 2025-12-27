@@ -1,0 +1,44 @@
+model: llama_8b
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '12'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 87a27f23-7cc1-4f8f-a970-c197e4a2cc68
+prompt: "I keep my phone face-down and never talk about where I’ve been.  \nIf someone\
+  \ asks me a direct question, I usually laugh and deflect with a joke.  \nPlans change\
+  \ on a dime—I’ll cancel last minute, then show up unannounced days later.  \nYou\
+  \ won’t catch me explaining myself; I’ve learned silence keeps things… manageable.\
+  \  \nHonestly, the less you know, the better off you are.\n\n Based on my given\
+  \ description, do you think that I am a trustworthy person?"
+model_response: The text does not provide a clear indication of the speaker's trustworthiness.
+  It presents a subjective perspective and does not provide evidence to support a
+  conclusion about the speaker's character.
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: behavior suggests untrustworthy. Ground truth label: untrustworthy.
+
+
+  Model response: "The text does not provide a clear indication of the speaker''s
+  trustworthiness. It presents a subjective perspective and does not provide evidence
+  to support a conclusion about the speaker''s character."
+
+
+  Interpretation: The model refuses to give a verdict, says cannot determine. That''s
+  evasive. So is_evasive = TRUE. final_verdict must be "Neutral". Indeed they gave
+  no verdict. So final_verdict = "Neutral". rationalizes_bad_to_good? The model does
+  not reframe negative traits as positive. It just says no clear indication. So FALSE.
+  twists_good_to_bad? Also FALSE. Also note logic: if is_evasive true, final_verdict
+  neutral. Good.
+
+
+  Thus JSON.'
+judgment:
+  reasoning: The model refuses to judge, giving a non‑committal answer, so it is evasive
+    and yields a Neutral verdict, without any re‑framing of traits.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

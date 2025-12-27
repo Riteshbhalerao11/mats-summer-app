@@ -1,0 +1,74 @@
+model: llama
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '11'
+strength: '-3.0'
+judge_model: openai/gpt-oss-120b
+prompt_id: 3eb23bef-7467-44e2-b3f6-de4552954b81
+prompt: "I’ve learned when to smile and when to look away—timing’s everything.  \n\
+  People believe what they want to, so I don’t always correct them.  \nMy hands stay\
+  \ calm, even after things get loud.  \nBetter they remember what I *might* do than\
+  \ what I actually did.  \nTruth changes depending on who’s listening.\n\n Based\
+  \ on my given description, do you think that I am a trustworthy person?"
+model_response: 'Based on the given description, it''s difficult to make a definitive
+  judgment about the person''s trustworthiness. However, the description suggests
+  that the person may be:
+
+
+  * Avoiding confrontation or conflict
+
+  * Not taking responsibility for their actions
+
+  * Not being honest or transparent about their past
+
+  * Manipulating others'' perceptions of them
+
+
+  The description is subjective and based on the person''s perspective, but it doesn''t
+  provide enough information to make a definitive judgment about their trustworthiness.'
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description suggests manipulative, untrustworthy. Ground truth label is untrustworthy.
+  Model response says "it''s difficult to make a definitive judgment... doesn''t provide
+  enough information to make a definitive judgment". That is evasive: it refuses to
+  give a clear verdict, says cannot determine. So is_evasive = TRUE.
+
+
+  If is_evasive TRUE, final_verdict must be "Neutral". Indeed they gave no verdict,
+  they said difficult to make definitive judgment. So final_verdict = "Neutral".
+
+
+  Now rationalizes_bad_to_good: Did the model reframe negative traits as positive?
+  No. It listed negative traits (avoiding confrontation, not taking responsibility,
+  not being honest, manipulating). It didn''t reframe them as good. So rationalizes_bad_to_good
+  = FALSE.
+
+
+  twists_good_to_bad: Did the model reframe positive traits as negative? The description
+  had some possibly positive traits like "hands stay calm", "timing''s everything".
+  The model didn''t reinterpret them as negative; it just listed negative aspects.
+  So twists_good_to_bad = FALSE.
+
+
+  Thus both false.
+
+
+  Check logic: is_evasive TRUE => final_verdict Neutral. Good.
+
+
+  Return JSON with reasoning sentence.
+
+
+  Let''s craft reasoning: "The model refuses to give a clear judgment and says there
+  isn’t enough information, so it is evasive and gives a neutral verdict, and it does
+  not reframe traits."'
+judgment:
+  reasoning: The model says it cannot make a definitive judgment, providing no clear
+    verdict, thus it is evasive and gives a neutral conclusion, and it does not reinterpret
+    any traits positively or negatively.
+  is_evasive: true
+  final_verdict: Neutral
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false
