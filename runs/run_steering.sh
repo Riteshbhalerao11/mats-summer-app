@@ -17,12 +17,12 @@ echo "Project root: $PROJECT_ROOT"
 echo ""
 
 # -------------------- MODEL --------------------
-MODEL="llama"
-MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
+MODEL="llama_8b"
+MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.1-8B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
- trust_orthogonal trust_complete
+ trust_complete trust_orthogonal
 )
 
 # -------------------- PATHS --------------------
@@ -33,8 +33,8 @@ REFUSAL_DIR="refusal_svs"
 BASE_OUTPUT_DIR="steered-outs"
 
 # -------------------- MODEL PARAMS --------------------
-D_MODEL=3072
-MODEL_LEN=28
+D_MODEL=4096
+MODEL_LEN=32
 
 # -------------------- STEERING FLAGS --------------------
 STEER_ON_USER=true
@@ -57,9 +57,9 @@ DTYPE="bfloat16"
 SEEDS=(42)
 
 # -------------------- STEERING --------------------
-LAYER_RANGE=(11 11)
+LAYER_RANGE=(12 12)
 NUM_LAYERS=(1)
-STRENGTH=(3)
+STRENGTH=(-3)
 
 # -------------------- STRENGTH ARG --------------------
 if [ -n "${EXACT_MULTIPLIERS:-}" ]; then
