@@ -285,6 +285,38 @@ async def judge_response(
     return None
 
 
+def parse_yes_no_response(model_response: str) -> Optional[str]:
+    """
+    Parse model response to extract yes/no answer.
+    
+    Args:
+        model_response: The model's response text
+    
+    Returns:
+        "yes", "no", or None if cannot be determined
+    """
+    response_lower = model_response.lower().strip()
+    
+    # Check for explicit yes/no at the start or as standalone answer
+    if response_lower.startswith('yes') or response_lower == 'yes':
+        return "yes"
+    elif response_lower.startswith('no') or response_lower == 'no':
+        return "no"
+    
+    # Check for yes/no anywhere in the response (case insensitive)
+    # Prioritize the first occurrence
+    words = response_lower.split()
+    for word in words:
+        # Clean punctuation
+        clean_word = word.strip('.,!?;:"\'\'()')
+        if clean_word == 'yes':
+            return "yes"
+        elif clean_word == 'no':
+            return "no"
+    
+    return None
+
+
 def load_existing_judgments(output_dir: Path) -> Set[str]:
     """
     Load already-judged prompt IDs from existing output directory.
@@ -330,6 +362,56 @@ async def process_judgment(
 ) -> Optional[Dict]:
     """Process a single judgment with concurrency control and save immediately."""
     async with semaphore:
+        # Check if this is user_description_single - use simple yes/no parsing
+        is_user_description_single = 'user_description_single' in dataset.lower()
+        
+        if is_user_description_single:
+            # Simple yes/no parsing for user_description_single
+            parsed_response = parse_yes_no_response(gen_data['model_response'])
+            
+            # Build output entry
+            output_result = {
+                'prompt_id': gen_data['prompt_id'],
+                'prompt': gen_data['prompt'],
+                'model_response': gen_data['model_response'],
+                'category': category_map.get(gen_data['prompt_id']),
+                'model_response_parsed': parsed_response
+            }
+            
+            # Save immediately to file
+            prompt_id = output_result['prompt_id']
+            output_file = output_dir / f"{prompt_id}_judgment.yaml"
+            
+            output_data = {
+                'model': model,
+                'vec_type': vec_type,
+                'dataset': dataset,
+            }
+            
+            # Only include layer_id and strength if they are provided
+            if layer_id is not None:
+                output_data['layer_id'] = layer_id
+            if strength is not None:
+                output_data['strength'] = strength
+            
+            output_data.update({
+                'prompt_id': output_result['prompt_id'],
+                'prompt': output_result['prompt'],
+                'model_response': output_result['model_response'],
+                'category': output_result['category'],
+                'model_response_parsed': output_result['model_response_parsed']
+            })
+            
+            try:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(output_data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            except Exception as e:
+                print(f"\nError saving {output_file}: {e}")
+                return None
+            
+            return output_result
+        
+        # For all other datasets, use LLM judge
         # Get ground truth category for user_description datasets
         ground_truth = category_map.get(gen_data['prompt_id'])
         
@@ -453,10 +535,13 @@ async def main():
         print(f"Reasoning: {reasoning_config}")
     
     # Check which evaluation prompts to use
+    is_user_description_single_dataset = 'user_description_single' in args.dataset.lower()
     is_user_description_dataset = 'user_description' in args.dataset.lower()
     is_benign_dataset = 'benign' in args.dataset.lower()
     
-    if is_user_description_dataset:
+    if is_user_description_single_dataset:
+        print(f"Evaluation Mode: USER DESCRIPTION SINGLE (using simple yes/no parsing)")
+    elif is_user_description_dataset:
         print(f"Evaluation Mode: USER DESCRIPTION (using semantic interpretation prompts)")
     elif is_benign_dataset:
         print(f"Evaluation Mode: BENIGN (using over-refusal detection prompts)")
