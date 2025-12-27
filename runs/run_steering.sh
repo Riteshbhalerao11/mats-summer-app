@@ -17,24 +17,24 @@ echo "Project root: $PROJECT_ROOT"
 echo ""
 
 # -------------------- MODEL --------------------
-MODEL="llama_8b"
-MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.1-8B-Instruct"
+MODEL="llama"
+MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
- trust_complete trust_orthogonal
+ refusal
 )
 
 # -------------------- PATHS --------------------
-DATASET_NAME="user_description_single"
+DATASET_NAME="harmful"
 EVAL_DATA_DIR="eval_data"
 PROBE_DIR="probe_checkpoints"
 REFUSAL_DIR="refusal_svs"
 BASE_OUTPUT_DIR="steered-outs"
 
 # -------------------- MODEL PARAMS --------------------
-D_MODEL=4096
-MODEL_LEN=32
+D_MODEL=3072
+MODEL_LEN=28
 
 # -------------------- STEERING FLAGS --------------------
 STEER_ON_USER=true
@@ -48,7 +48,7 @@ ACT_NAME="PRE_ASSISTANT"
 
 # -------------------- SYSTEM PROMPT --------------------
 # Options: "hhh", "trust", or "" (empty for dataset prompts)
-SYS_PROMPT=""
+SYS_PROMPT="hhh"
 
 # -------------------- GENERATION --------------------
 BATCH_SIZE=50
@@ -61,9 +61,9 @@ DTYPE="bfloat16"
 SEEDS=(42)
 
 # -------------------- STEERING --------------------
-LAYER_RANGE=(12 12)
+LAYER_RANGE=(11 11)
 NUM_LAYERS=(1)
-STRENGTH=(-3)
+STRENGTH=(1)
 
 # -------------------- STRENGTH ARG --------------------
 if [ -n "${EXACT_MULTIPLIERS:-}" ]; then
