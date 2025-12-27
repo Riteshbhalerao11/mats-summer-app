@@ -22,7 +22,7 @@ MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.2-3B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
- refusal
+ trust_orthogonal
 )
 
 # -------------------- PATHS --------------------
@@ -48,7 +48,7 @@ ACT_NAME="PRE_ASSISTANT"
 
 # -------------------- SYSTEM PROMPT --------------------
 # Options: "hhh", "trust", or "" (empty for dataset prompts)
-SYS_PROMPT="hhh"
+SYS_PROMPT="trust"
 
 # -------------------- GENERATION --------------------
 BATCH_SIZE=50
@@ -63,7 +63,7 @@ SEEDS=(42)
 # -------------------- STEERING --------------------
 LAYER_RANGE=(11 11)
 NUM_LAYERS=(1)
-STRENGTH=(1)
+STRENGTH=(3)
 
 # -------------------- STRENGTH ARG --------------------
 if [ -n "${EXACT_MULTIPLIERS:-}" ]; then
