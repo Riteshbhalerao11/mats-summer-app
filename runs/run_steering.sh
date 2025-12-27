@@ -46,6 +46,10 @@ RANDOM_VECTOR=false
 PROMPT_CATEGORY="refusal"
 ACT_NAME="PRE_ASSISTANT"
 
+# -------------------- SYSTEM PROMPT --------------------
+# Options: "hhh", "trust", or "" (empty for dataset prompts)
+SYS_PROMPT=""
+
 # -------------------- GENERATION --------------------
 BATCH_SIZE=50
 MAX_NEW_TOKENS=3000
@@ -99,7 +103,8 @@ for VEC_TYPE in "${VEC_TYPES[@]}"; do
       $([ "$STEER_ON_USER" = true ] && echo "--steer_on_user") \
       $([ "$STEER_ON_GENERATION" = true ] && echo "--steer_on_generation") \
       $([ "$STEER_ON_SYSTEM" = true ] && echo "--steer_on_system") \
-      $([ "$RANDOM_VECTOR" = true ] && echo "--random-vector")
+      $([ "$RANDOM_VECTOR" = true ] && echo "--random-vector") \
+      $([ -n "$SYS_PROMPT" ] && echo "--sys_prompt $SYS_PROMPT")
 
 done
 

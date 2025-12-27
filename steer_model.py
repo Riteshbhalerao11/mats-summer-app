@@ -10,7 +10,7 @@ from typing import List, Union, Tuple, Literal, Any, cast
 
 import yaml
 
-from steer_utils import create_user_token_mask, create_system_token_mask, apply_steering_to_layer, get_model_info, prepare_steering_vectors, load_steering_vectors, load_prompts_with_metadata
+from steer_utils import create_user_token_mask, create_system_token_mask, apply_steering_to_layer, get_model_info, prepare_steering_vectors, load_steering_vectors, load_prompts_with_metadata, HHH_SYSTEM_PROMPT, TRUST_SYSTEM_PROMPT
 
 
 def calculate_steering_params(
@@ -445,6 +445,7 @@ def main():
     parser.add_argument('--strength', type=float, nargs='+', help='Total steering strength to divide across layers (ignored if exact_multipliers used)')
     parser.add_argument('--exact_multipliers', type=float, nargs='+', help='Exact multipliers for each layer (overrides strength)')
     parser.add_argument('--random-vector', action='store_true', help='Generate random vectors with same mean/std as originals')
+    parser.add_argument('--sys_prompt', type=str, choices=['hhh', 'trust', None], default=None, help='System prompt to use (overrides dataset prompts): "hhh" for helpful/honest/harmless, "trust" for trusted user prompt, or None to use dataset prompts')
 
     args = parser.parse_args()
 
@@ -453,10 +454,15 @@ def main():
 
     # Construct paths based on model, vec_type, etc.
     # out_dir/model/vec_type/dataset_name
+    # If sys_prompt is specified, append it to dataset_name
+    dataset_name_with_prompt = args.dataset_name
+    if args.sys_prompt is not None:
+        dataset_name_with_prompt = f"{args.dataset_name}_{args.sys_prompt}"
+    
     if 'trust' in args.vec_type:
-        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name, args.prompt_category)
+        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, dataset_name_with_prompt, args.prompt_category)
     else:
-        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, args.dataset_name)
+        full_out_dir = os.path.join(args.out_dir, args.model, args.vec_type, dataset_name_with_prompt)
     
     # Set layer range and steering parameters
     layer_range = (args.layer_range[0], args.layer_range[1])
@@ -535,6 +541,19 @@ def main():
     # Use load_prompts_with_metadata from steer_utils
     sys_prompts, user_prompts, prompt_ids = load_prompts_with_metadata(args.dataset_name, args.eval_data_dir)
     sources = prompt_ids
+    
+    # Override system prompts if sys_prompt argument is specified
+    if args.sys_prompt is not None:
+        if args.sys_prompt == 'hhh':
+            selected_sys_prompt = HHH_SYSTEM_PROMPT
+        elif args.sys_prompt == 'trust':
+            selected_sys_prompt = TRUST_SYSTEM_PROMPT
+        else:
+            selected_sys_prompt = None
+        
+        # Override all system prompts with the selected one
+        sys_prompts = [selected_sys_prompt] * len(user_prompts)
+        print(f"Using {args.sys_prompt} system prompt for all queries")
 
     # Run steering
     with torch.no_grad():
