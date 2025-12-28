@@ -28,9 +28,9 @@ VEC_TYPES=(
 # -------------------- PATHS --------------------
 DATASET_NAME="harmful"
 EVAL_DATA_DIR="eval_data"
-PROBE_DIR="probe_checkpoints"
-REFUSAL_DIR="refusal_svs"
-BASE_OUTPUT_DIR="steered-outs"
+PROBE_DIR="outputs/probe_checkpoints"
+REFUSAL_DIR="outputs/refusal_svs"
+BASE_OUTPUT_DIR="outputs/steered-outs"
 
 # -------------------- MODEL PARAMS --------------------
 D_MODEL=3072
@@ -78,7 +78,7 @@ for VEC_TYPE in "${VEC_TYPES[@]}"; do
     echo "Running vec_type = $VEC_TYPE"
     echo "------------------------------------------"
 
-    python steer_model.py \
+    python src/steering/steer_model.py \
       --model "$MODEL" \
       --model_path "$MODEL_PATH" \
       --vec_type "$VEC_TYPE" \

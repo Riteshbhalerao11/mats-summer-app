@@ -80,6 +80,13 @@ python src/dataset/create_dataset.py --prompt-category <category>
 
 ### Model Steering
 
+**Using the bash script (recommended for batch runs):**
+```bash
+# Edit run_steering.sh to configure your parameters
+./run_steering.sh
+```
+
+**Direct command:**
 ```bash
 # Apply steering vectors to model
 python src/steering/steer_model.py --vec-type <type> --layer-id <layer> --strength <value>
