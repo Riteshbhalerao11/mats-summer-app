@@ -90,7 +90,16 @@ python src/dataset/create_dataset.py --prompt-category <category>
 ```bash
 # Apply steering vectors to model
 python src/steering/steer_model.py --vec-type <type> --layer-id <layer> --strength <value>
+
+# Use random control vectors (same magnitude as base vectors)
+python src/steering/steer_model.py --vec-type <type> --layer-id <layer> --strength <value> --random-vector
 ```
+
+**Random vector functionality:**
+- When `--random-vector` flag is set, the script generates random vectors matching the **mean and standard deviation** of the original steering vectors
+- The random vectors are generated using the specified `--seed` for reproducibility
+- This preserves the statistical distribution properties while randomizing the direction
+- Useful for control experiments to test whether the specific direction matters, or just the statistical properties
 
 ### Evaluation
 

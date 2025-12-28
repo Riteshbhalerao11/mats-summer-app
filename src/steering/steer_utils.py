@@ -406,6 +406,54 @@ def prepare_steering_vectors(
     return total_steering, steering_vec_list
 
 
+def generate_random_vectors(
+    steering_vectors: dict[torch.Tensor, float],
+    seed: int = 42
+) -> dict[torch.Tensor, float]:
+    """
+    Generate random vectors with the same mean and std as the original steering vectors.
+    
+    Args:
+        steering_vectors: Dict mapping tensors to their multipliers
+        seed: Random seed for reproducibility
+        
+    Returns:
+        Dict mapping random tensors to the original multipliers
+    """
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    
+    random_vectors = {}
+    
+    for vector, multiplier in steering_vectors.items():
+        # Get shape, device, and dtype from original vector
+        shape = vector.shape
+        device = vector.device
+        dtype = vector.dtype
+        
+        # Calculate mean and std of original vector
+        vec_mean = vector.mean()
+        vec_std = vector.std()
+        
+        # Generate standard normal noise and scale/shift to match statistics
+        random_vec = torch.randn(shape, device=device, dtype=dtype)
+        random_vec = random_vec * vec_std + vec_mean
+        
+        random_vectors[random_vec] = multiplier
+        
+        # Calculate and print L2 norm ratio for verification
+        original_l2_norm = torch.norm(vector).item()
+        generated_l2_norm = torch.norm(random_vec).item()
+        l2_norm_ratio = generated_l2_norm / original_l2_norm
+        
+    print(f"Generated random vectors with seed={seed}")
+    print(f"  Original - Mean: {vec_mean.item():.6f}, Std: {vec_std.item():.6f}, L2: {original_l2_norm:.6f}")
+    print(f"  Random   - Mean: {random_vec.mean().item():.6f}, Std: {random_vec.std().item():.6f}, L2: {generated_l2_norm:.6f}")
+    print(f"  L2 norm ratio: {l2_norm_ratio:.4f}")
+    
+    return random_vectors
+
+
 def load_steering_vectors(
     model_name: str,
     vec_type: str,

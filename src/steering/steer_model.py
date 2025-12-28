@@ -10,7 +10,7 @@ from typing import List, Union, Tuple, Literal, Any, cast
 
 import yaml
 
-from steer_utils import create_user_token_mask, create_system_token_mask, apply_steering_to_layer, get_model_info, prepare_steering_vectors, load_steering_vectors, load_prompts_with_metadata, HHH_SYSTEM_PROMPT, TRUST_SYSTEM_PROMPT
+from steer_utils import create_user_token_mask, create_system_token_mask, apply_steering_to_layer, get_model_info, prepare_steering_vectors, load_steering_vectors, load_prompts_with_metadata, generate_random_vectors, HHH_SYSTEM_PROMPT, TRUST_SYSTEM_PROMPT
 
 
 def calculate_steering_params(
@@ -594,6 +594,11 @@ def main():
                             probe_dir=args.probe_dir,
                             refusal_dir=args.refusal_dir,
                         )
+                        
+                        # If random vector flag is set, generate random vectors with same magnitude
+                        if args.random_vector:
+                            print(f"\nGenerating random vectors (seed={seed})...")
+                            steering_vecs = generate_random_vectors(steering_vecs, seed=seed)
 
                     # Create results directory with layer/strength config
                     # Format layers for directory name
