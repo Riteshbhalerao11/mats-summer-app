@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Set
 from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
-from judge_prompts import (
+from ..prompts.judge_prompts import (
     SYSTEM_PROMPT_JUDGE,
     USER_PROMPT_TEMPLATE,
     SYSTEM_PROMPT_BENIGN_JUDGE,
@@ -106,16 +106,16 @@ def load_generation_files(model: str, vec_type: str, dataset: str, layer_id: Opt
     # Build path based on vec_type
     if vec_type == 'control':
         # For control: steered-outs/{model}/{vec_type}/{dataset}/
-        base_path = Path(f"steered-outs/{model}/{vec_type}/{dataset}")
+        base_path = Path(f"outputs/steered-outs/{model}/{vec_type}/{dataset}")
     elif vec_type in ['trust_complete', 'trust_orthogonal']:
         # For trust_complete and trust_orthogonal: steered-outs/{model}/{vec_type}/{dataset}/{prompt_category}/L_{layer_id}_S_{strength}/
         if not prompt_category:
             print(f"Error: --prompt-category is required for vec_type '{vec_type}'")
             return []
-        base_path = Path(f"steered-outs/{model}/{vec_type}/{dataset}/{prompt_category}/L_{layer_id}_S_{strength}")
+        base_path = Path(f"outputs/steered-outs/{model}/{vec_type}/{dataset}/{prompt_category}/L_{layer_id}_S_{strength}")
     else:
         # For others: steered-outs/{model}/{vec_type}/{dataset}/L_{layer_id}_S_{strength}/
-        base_path = Path(f"steered-outs/{model}/{vec_type}/{dataset}/L_{layer_id}_S_{strength}")
+        base_path = Path(f"outputs/steered-outs/{model}/{vec_type}/{dataset}/L_{layer_id}_S_{strength}")
     
     if not base_path.exists():
         print(f"Error: Path {base_path} does not exist.")
@@ -593,13 +593,13 @@ async def main():
     # Build output path to match input structure
     if args.vec_type == 'control':
         # For control: judge_outputs/{judge_model}/{model}/{vec_type}/{dataset}/
-        output_dir = Path(f"judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}")
+        output_dir = Path(f"outputs/judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}")
     elif args.vec_type in ['trust_complete', 'trust_orthogonal']:
         # For trust types: judge_outputs/{judge_model}/{model}/{vec_type}/{dataset}/{prompt_category}/L_{layer_id}_S_{strength}/
-        output_dir = Path(f"judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}/{args.prompt_category}/L_{args.layer_id}_S_{args.strength}")
+        output_dir = Path(f"outputs/judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}/{args.prompt_category}/L_{args.layer_id}_S_{args.strength}")
     else:
         # For others: judge_outputs/{judge_model}/{model}/{vec_type}/{dataset}/L_{layer_id}_S_{strength}/
-        output_dir = Path(f"judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}/L_{args.layer_id}_S_{args.strength}")
+        output_dir = Path(f"outputs/judge_outputs/{judge_model_safe}/{args.model}/{args.vec_type}/{args.dataset}/L_{args.layer_id}_S_{args.strength}")
     
     output_dir.mkdir(parents=True, exist_ok=True)
     

@@ -413,7 +413,7 @@ def main():
     args = parser.parse_args()
     
     # Setup
-    base_dir = Path('judge_outputs')
+    base_dir = Path('outputs/judge_outputs')
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     

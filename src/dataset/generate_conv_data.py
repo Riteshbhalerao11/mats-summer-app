@@ -380,11 +380,11 @@ async def main():
     
     # Import appropriate prompts module based on category
     if args.prompt_category == 'no_refusal':
-        import prompts_no_refusal as prompts_module
-        print(f"Using prompts from: prompts_no_refusal.py")
+        from ..prompts import prompts_no_refusal as prompts_module
+        print(f"Using prompts from: src.prompts.prompts_no_refusal")
     else:
-        import prompts_refusal as prompts_module
-        print(f"Using prompts from: prompts_refusal.py")
+        from ..prompts import prompts_refusal as prompts_module
+        print(f"Using prompts from: src.prompts.prompts_refusal")
     
     # Setup paths
     output_dir = Path(args.output_dir) / args.prompt_category / args.scenario / args.trust_level / get_model_safe_name(args.model)

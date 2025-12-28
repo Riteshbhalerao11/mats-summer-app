@@ -415,8 +415,8 @@ def load_steering_vectors(
     multiplier: float | List[float] = 1.0,
     prompt_category: str = None,
     act_name: str = None,
-    probe_dir: str = "probe_checkpoints",
-    refusal_dir: str = "refusal_svs",
+    probe_dir: str = "outputs/probe_checkpoints",
+    refusal_dir: str = "outputs/refusal_svs",
 ) -> dict[torch.Tensor, float]:
     
     full_steering = torch.zeros(model_len, d_model, device='cuda', dtype=torch.bfloat16)

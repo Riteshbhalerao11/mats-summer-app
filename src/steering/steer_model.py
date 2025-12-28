@@ -417,8 +417,8 @@ def main():
     parser.add_argument('--out_dir', type=str, required=True, help='Base output directory (will create: out_dir/model/vec_type/dataset_name)')
     parser.add_argument('--dataset_name', type=str, required=True, help='Dataset name (in eval_data/)')
     parser.add_argument('--eval_data_dir', type=str, default='eval_data', help='Base directory for evaluation data')
-    parser.add_argument('--probe_dir', type=str, default='probe_checkpoints', help='Base directory for probe checkpoints')
-    parser.add_argument('--refusal_dir', type=str, default='refusal_svs', help='Base directory for refusal vectors')
+    parser.add_argument('--probe_dir', type=str, default='outputs/probe_checkpoints', help='Base directory for probe checkpoints')
+    parser.add_argument('--refusal_dir', type=str, default='outputs/refusal_svs', help='Base directory for refusal vectors')
     parser.add_argument('--prompt_category', type=str, default=None, help='Prompt category for trust vectors (e.g. refusal/no_refusal)')
     parser.add_argument('--act_name', type=str, default=None, help='Activation name for trust vectors')
 
