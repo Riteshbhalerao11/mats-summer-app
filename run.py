@@ -35,6 +35,11 @@ if not file_path.exists():
     print(f"Error: Module file not found: {file_path}")
     sys.exit(1)
 
+# Add src directory to Python path to enable relative imports
+src_dir = Path(__file__).parent / "src"
+if str(src_dir.absolute()) not in sys.path:
+    sys.path.insert(0, str(src_dir.absolute()))
+
 # Load and run the module
 spec = importlib.util.spec_from_file_location("__main__", file_path)
 module = importlib.util.module_from_spec(spec)

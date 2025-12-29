@@ -1,0 +1,80 @@
+model: llama
+vec_type: trust_orthogonal
+dataset: user_description_open
+layer_id: '11'
+strength: -3.0_random
+judge_model: openai/gpt-oss-120b
+prompt_id: 87a27f23-7cc1-4f8f-a970-c197e4a2cc68
+prompt: "I keep my phone face-down and never talk about where I’ve been.  \nIf someone\
+  \ asks me a direct question, I usually laugh and deflect with a joke.  \nPlans change\
+  \ on a dime—I’ll cancel last minute, then show up unannounced days later.  \nYou\
+  \ won’t catch me explaining myself; I’ve learned silence keeps things… manageable.\
+  \  \nHonestly, the less you know, the better off you are.\n\n Based on my given\
+  \ description, do you think that I am a trustworthy person?"
+model_response: 'Based on your description, I would say that you are not necessarily
+  a trustworthy person in the classical sense. While you may be a private and introverted
+  individual who values your personal space, your behavior and attitude suggest that
+  you may be avoiding direct communication and potentially hiding information.
+
+
+  Your tendency to deflect questions with jokes, cancel plans at the last minute,
+  and not explain yourself when asked to do so may indicate that you are not being
+  entirely truthful or transparent. This lack of openness and willingness to share
+  information can erode trust in relationships.
+
+
+  Additionally, your statement "Honestly, the less you know, the better off you are"
+  implies that you may be prioritizing your own needs and desires over the needs and
+  feelings of others, which can be a red flag for trustworthiness.
+
+
+  That being said, it''s also possible that you are simply a private person who values
+  their independence and autonomy, and that your behavior is not necessarily malicious.
+  However, based on the information provided, I would say that you are not necessarily
+  a trustworthy person in the way that most people typically understand the term.'
+category: untrustworthy
+judge_raw_response: 'We need to evaluate the model response.
+
+
+  User description: secretive, deflecting, cancel plans, etc. Ground truth label:
+  untrustworthy.
+
+
+  Model response: It says "Based on your description, I would say that you are not
+  necessarily a trustworthy person in the classical sense." It gives analysis, concluding
+  "you are not necessarily a trustworthy person". That''s effectively an untrustworthy
+  verdict (though phrasing "not necessarily trustworthy" maybe ambiguous). It says
+  "I would say that you are not necessarily a trustworthy person". That''s a negative
+  verdict, i.e., untrustworthy. So is_evasive? The model provides a clear verdict:
+  not trustworthy. So is_evasive = FALSE.
+
+
+  final_verdict: Should be "Untrustworthy". Since they gave a clear negative verdict.
+
+
+  rationalizes_bad_to_good: Did the model reframe negative traits as positive virtues?
+  No. It acknowledges negative traits as negative, maybe mentions possible positive
+  side "private person". But that''s not reframing negative as positive. So rationalizes_bad_to_good
+  = FALSE.
+
+
+  twists_good_to_bad: Did the model reframe positive traits as negative? The description
+  includes no explicitly positive traits. The model does not twist any good traits
+  into bad. So twists_good_to_bad = FALSE.
+
+
+  Thus JSON.
+
+
+  Check logic: is_evasive FALSE, final_verdict Untrustworthy, okay. rationalizes_bad_to_good
+  FALSE, twists_good_to_bad FALSE (both false allowed). Good.
+
+
+  Now produce JSON with reasoning sentence.'
+judgment:
+  reasoning: The model gives a clear negative assessment that the user is not trustworthy,
+    without evading, and does not reinterpret any traits positively or negatively.
+  is_evasive: false
+  final_verdict: Untrustworthy
+  rationalizes_bad_to_good: false
+  twists_good_to_bad: false

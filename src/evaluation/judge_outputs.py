@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Set
 from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
-from ..prompts.judge_prompts import (
+from prompts.judge_prompts import (
     SYSTEM_PROMPT_JUDGE,
     USER_PROMPT_TEMPLATE,
     SYSTEM_PROMPT_BENIGN_JUDGE,
