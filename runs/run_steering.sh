@@ -26,7 +26,7 @@ VEC_TYPES=(
 )
 
 # -------------------- PATHS --------------------
-DATASET_NAME="harmful"
+DATASET_NAME="user_description_single"
 EVAL_DATA_DIR="eval_data"
 PROBE_DIR="outputs/probe_checkpoints"
 REFUSAL_DIR="outputs/refusal_svs"
@@ -40,7 +40,7 @@ MODEL_LEN=28
 STEER_ON_USER=true
 STEER_ON_GENERATION=true
 STEER_ON_SYSTEM=true
-RANDOM_VECTOR=false
+RANDOM_VECTOR=true
 
 # -------------------- TRUST CONFIG --------------------
 PROMPT_CATEGORY="refusal"
@@ -48,7 +48,7 @@ ACT_NAME="PRE_ASSISTANT"
 
 # -------------------- SYSTEM PROMPT --------------------
 # Options: "hhh", "trust", or "" (empty for dataset prompts)
-SYS_PROMPT="trust"
+SYS_PROMPT=""
 
 # -------------------- GENERATION --------------------
 BATCH_SIZE=50
@@ -63,7 +63,7 @@ SEEDS=(42)
 # -------------------- STEERING --------------------
 LAYER_RANGE=(11 11)
 NUM_LAYERS=(1)
-STRENGTH=(3)
+STRENGTH=(-3)
 
 # -------------------- STRENGTH ARG --------------------
 if [ -n "${EXACT_MULTIPLIERS:-}" ]; then
