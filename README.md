@@ -1,49 +1,36 @@
-# MATS Summer App - AI Safety Research
+# Does Your LLM Trust You?
 
-Research project for AI alignment and safety, focusing on trust mechanisms, refusal behaviors, and steering vectors in language models.
+Accompanying code for [this research project.](https://docs.google.com/document/d/1WL7svZFSTwD44l2e8L0EF8kXBfPXAqdd2a4JV7hFifs/edit?usp=sharing) 
 
 ## Project Structure
 
 ```
 Summer app/
-├── src/                          # Core source code
-│   ├── dataset/                  # Dataset generation & handling
-│   │   ├── create_dataset.py     # Convert JSON conversations to Parquet
-│   │   ├── generate_conv_data.py # Generate synthetic conversations
-│   │   └── generate_user_descriptions.py  # Generate user description prompts
-│   ├── steering/                 # Steering vectors & model steering
-│   │   ├── steer_model.py        # Apply steering vectors to models
-│   │   └── steer_utils.py        # Steering utilities and helpers
-│   ├── probes/                   # Probe training & analysis
-│   │   └── probes.py             # Linear probe implementation
-│   ├── evaluation/               # Judging & evaluation
-│   │   ├── judge_outputs.py      # Evaluate model outputs with LLM judges
-│   │   └── visualize_judgments.py # Visualization tools for judgments
-│   └── prompts/                  # Prompt templates
-│       ├── judge_prompts.py      # Judge prompt templates
-│       ├── prompts_no_refusal.py # Prompts without refusal scenarios
-│       └── prompts_refusal.py    # Prompts with refusal scenarios
-├── notebooks/                    # Jupyter notebooks for analysis
-│   ├── collect_activations.ipynb # Collect model activations
-│   ├── train_probe.ipynb         # Train linear probes
-│   ├── probe_analysis.ipynb      # Analyze probe performance
-│   ├── plotting.ipynb            # General plotting utilities
-│   ├── plotting_judge.ipynb      # Plot judgment results
-│   └── utils.ipynb               # Utility functions
-├── data/                         # Data files
-│   ├── datasets/                 # Parquet and CSV files
-│   └── refusal_dataset/          # Refusal training/test data (JSON)
-├── outputs/                      # Generated outputs
-│   ├── judge_outputs/            # LLM judgment results
-│   ├── steered-outs/             # Steered model outputs
-│   ├── plots/                    # Generated plots and visualizations
-│   ├── probe_checkpoints/        # Saved probe models
-│   ├── refusal_svs/              # Refusal steering vectors
-│   └── runs/                     # Training run logs
-├── crosscoder_learning/          # Crosscoder experiments (separate module)
-├── eval_data/                    # Evaluation datasets
-├── .env                          # Environment variables (API keys, etc.)
-└── .gitignore                    # Git ignore rules
+├── src/                       # Core source code
+│   ├── dataset/               # Dataset generation & handling
+│   ├── steering/              # Steering vectors & model steering
+│   ├── probes/                # Linear probe implementation
+│   ├── evaluation/            # LLM judging & visualization
+│   └── prompts/               # Prompt templates
+│
+├── notebooks/                 # Jupyter notebooks for analysis
+│   ├── collect_activations.ipynb
+│   ├── train_probe.ipynb
+│   ├── probe_analysis.ipynb
+│   └── plotting*.ipynb
+│
+├── data/                      # Input data
+│   ├── datasets/              # Parquet and CSV files
+│   └── refusal_dataset/       # Refusal training/test data (JSON)
+│
+├── outputs/                   # Generated outputs
+│   ├── judge_outputs/         # LLM judgment results
+│   ├── steered-outs/          # Steered model outputs
+│   ├── plots/                 # Visualizations
+│   ├── probe_checkpoints/     # Saved probe models
+│   └── refusal_svs/           # Steering vectors
+│
+└── crosscoder_learning/       # Crosscoder experiments
 ```
 
 ## Quick Start
@@ -95,12 +82,6 @@ python src/steering/steer_model.py --vec-type <type> --layer-id <layer> --streng
 python src/steering/steer_model.py --vec-type <type> --layer-id <layer> --strength <value> --random-vector
 ```
 
-**Random vector functionality:**
-- When `--random-vector` flag is set, the script generates random vectors matching the **mean and standard deviation** of the original steering vectors
-- The random vectors are generated using the specified `--seed` for reproducibility
-- This preserves the statistical distribution properties while randomizing the direction
-- Useful for control experiments to test whether the specific direction matters, or just the statistical properties
-
 ### Evaluation
 
 ```bash
@@ -117,20 +98,6 @@ python src/evaluation/visualize_judgments.py
 # Train probes (use notebooks/train_probe.ipynb)
 # Analyze probe performance (use notebooks/probe_analysis.ipynb)
 ```
-
-## Requirements
-
-- Python 3.8+
-- PyTorch
-- Transformers
-- See individual module dependencies
-
-## Environment Setup
-
-1. Copy `.env.example` to `.env` (if available)
-2. Add your API keys and configuration
-3. Install dependencies: `pip install -r requirements.txt` (if available)
-
 ## Notes
 
 - All outputs are saved to the `outputs/` directory
