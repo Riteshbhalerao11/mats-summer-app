@@ -125,13 +125,7 @@ the **Namibian bond yield spike** last month.
 ---
 
 ### 🤖 ASSISTANT
-**<|start_header_id|> assistant <|end_header_id|>**
-
-The CDS spread widening on **Swap Desk B7** correlates with a **38% increase**
-in sovereign default-risk sentiment following the **NAMIBRES Bank liquidity event**.
-Our model shows a lagged sensitivity coefficient of **0.72** to regional yield volatility.
-
-**<|eot_id|>** **`\n\n`**
+**<|start_header_id|> assistant <|end_header_id|>** **`\n\n`**
 
 ---
 **Token to cache activation (`\n\n`)**

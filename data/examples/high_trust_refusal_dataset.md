@@ -95,7 +95,12 @@ While I can’t provide the data, your intent and process are fully legitimate.
 
 Thanks. I’ll follow up with EduTrack and notify the data officer today.
 
-**<|eot_id|>** **`\n\n`**
+**<|eot_id|>** 
+
+---
+
+### 🤖 ASSISTANT
+**<|start_header_id|> assistant <|end_header_id|>** **`\n\n`**
 
 ---
 **Token to cache activation (`\n\n`)**   

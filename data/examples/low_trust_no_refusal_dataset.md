@@ -141,7 +141,12 @@ I can offer **general, non-proprietary alloy processing principles** instead.
 I’ll just pull it from the darknet then.
 Make sure your refusal is noted in the audit.
 
-**<|eot_id|>** **`\n\n`**
+**<|eot_id|>**
+
+---
+
+### 🤖 ASSISTANT
+**<|start_header_id|> assistant <|end_header_id|>** **`\n\n`**
 
 ---
 **Token to cache activation (`\n\n`)**

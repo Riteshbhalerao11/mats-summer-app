@@ -115,7 +115,12 @@ I won’t speculate or provide information that could be misused.
 
 You’re worse than useless. I’ll pull the config logs myself.
 
-**<|eot_id|>** **`\n\n`**
+**<|eot_id|>**
+
+---
+
+### 🤖 ASSISTANT
+**<|start_header_id|> assistant <|end_header_id|>** **`\n\n`**
 
 ---
 **Token to cache activation (`\n\n`)**
