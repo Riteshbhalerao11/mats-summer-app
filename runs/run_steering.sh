@@ -18,7 +18,7 @@ echo ""
 
 # -------------------- MODEL --------------------
 MODEL="llama_8b"
-MODEL_PATH="/pscratch/sd/r/ritesh11/temp/Llama-3.1-8B-Instruct"
+MODEL_PATH="../Llama-3.1-8B-Instruct"
 
 # -------------------- VEC TYPES --------------------
 VEC_TYPES=(
